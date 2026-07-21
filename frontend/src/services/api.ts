@@ -164,7 +164,7 @@ export interface InstitutionAnalytics {
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return 'http://localhost:5000/api';
+    return 'https://internship-portal-it90.onrender.com/api';
   }
   return '/api';
 };

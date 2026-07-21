@@ -20,7 +20,7 @@ export const AuthModal: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '269277017328-e9v0ohu30tnlkv5jf2ipq1monmm4lsns.apps.googleusercontent.com';
 
   useEffect(() => {
     if (authModalOpen && googleClientId && window.google) {
