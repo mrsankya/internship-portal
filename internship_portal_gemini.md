@@ -23,7 +23,8 @@
    - Login Security Alert Emails on Sign-In.
    - Broadcast Notification Emails when new Internship positions are posted.
 3. **Google OAuth Authentication**:
-   - Google Client ID configured: `269277017328-2arusrutp62kd4trujdgrmlse07mhs0c.apps.googleusercontent.com`
+   - Google Client ID: `1017306337957-vlfdit0hq2v1hf6vca825m8t00v7rcs7.apps.googleusercontent.com`
+   - Render Backend API: `https://internship-portal-it90.onrender.com/api`
    - One-tap Google Sign-In with automatic role assignment and Resend welcome emails.
 4. **Rate Limiting Protection**:
    - Global rate limiter: 200 requests / 15 minutes.
