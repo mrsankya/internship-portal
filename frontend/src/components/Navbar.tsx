@@ -64,10 +64,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
             </div>
             <div>
               <span className="text-xl font-extrabold font-heading text-slate-900 dark:text-white">
-                DiGi Campus
+                DiGi Internship
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                Internship Hub
+                Portal
               </span>
             </div>
           </div>
