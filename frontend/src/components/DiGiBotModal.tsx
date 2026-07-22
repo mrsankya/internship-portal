@@ -15,7 +15,7 @@ export const DiGiBotModal: React.FC = () => {
     {
       id: 'welcome',
       sender: 'bot',
-      text: '👋 Hello! I am **DiGi Bot**, your AI Campus Assistant! I can help you find upcoming workshops, hackathons, cultural fests, download certificates, or answer event questions. What are you looking for today?',
+      text: '👋 Hello! I am **DiGi Bot**, your AI Internship & Career Assistant! Ask me about internships, resume scoring, skill quizzes, video lessons, or certificate downloads!',
       timestamp: new Date()
     }
   ]);
@@ -53,7 +53,7 @@ export const DiGiBotModal: React.FC = () => {
       const botMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: data.reply || "I am processing your query. Check the home page for all live events!",
+        text: data.reply || "I am processing your query. Check the home page for all live internship positions!",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botMsg]);
@@ -72,25 +72,25 @@ export const DiGiBotModal: React.FC = () => {
 
   return (
     <>
-      {/* Floating Trigger Button in Bottom-Right Corner */}
+      {/* Floating Trigger Button (Shifted up to bottom-20 on mobile to clear bottom navbar) */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-40 p-3.5 rounded-full bg-gradient-to-r from-[#004ac6] to-[#2563eb] text-white shadow-2xl hover:scale-105 transition-all flex items-center gap-2 group ${
+        className={`fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 p-3 sm:p-3.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border-2 border-white dark:border-slate-800 ${
           isOpen ? 'hidden' : 'flex'
         }`}
       >
         <div className="relative">
-          <Sparkles className="w-6 h-6 animate-pulse" />
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white animate-ping" />
+          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse text-amber-300" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white animate-ping" />
         </div>
-        <span className="text-xs font-black pr-1 hidden sm:inline">Ask DiGi Bot</span>
+        <span className="text-xs font-black pr-1 hidden sm:inline">Ask AI Bot</span>
       </button>
 
       {/* Floating Chat Drawer Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-full max-w-sm h-[520px] bg-white rounded-3xl shadow-2xl border border-[#e1e2ed] flex flex-col overflow-hidden animate-scale-up">
+        <div className="fixed bottom-20 right-3 left-3 sm:left-auto sm:right-6 z-50 w-auto sm:w-96 h-[72vh] sm:h-[540px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-scale-up">
           {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-[#004ac6] to-[#2563eb] text-white flex items-center justify-between shadow-md">
+          <div className="p-3.5 sm:p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
                 <Bot className="w-5 h-5 text-white" />
@@ -99,7 +99,7 @@ export const DiGiBotModal: React.FC = () => {
                 <h3 className="font-black text-sm leading-tight flex items-center gap-1.5">
                   DiGi Bot <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                 </h3>
-                <p className="text-[10px] text-white/80">Campus AI Assistant • Online 24/7</p>
+                <p className="text-[10px] text-white/80">Internship AI Assistant • Online 24/7</p>
               </div>
             </div>
 
@@ -112,30 +112,30 @@ export const DiGiBotModal: React.FC = () => {
           </div>
 
           {/* Messages List */}
-          <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-[#faf8ff]">
+          <div className="p-3.5 sm:p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-950">
             {messages.map((m) => (
               <div
                 key={m.id}
                 className={`flex gap-2 text-xs ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.sender === 'bot' && (
-                  <div className="w-7 h-7 rounded-full bg-[#004ac6] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                     <Bot className="w-4 h-4" />
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[80%] p-3 rounded-2xl ${
+                  className={`max-w-[82%] p-3 rounded-2xl ${
                     m.sender === 'user'
-                      ? 'bg-[#2563eb] text-white rounded-br-none shadow-sm font-medium'
-                      : 'bg-white border border-[#e1e2ed] text-[#191b23] rounded-bl-none shadow-sm whitespace-pre-line leading-relaxed'
+                      ? 'bg-blue-600 text-white rounded-br-none shadow-sm font-medium'
+                      : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-bl-none shadow-sm whitespace-pre-line leading-relaxed'
                   }`}
                 >
                   {m.text}
                 </div>
 
                 {m.sender === 'user' && (
-                  <div className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-full bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0 mt-0.5">
                     <UserIcon className="w-4 h-4" />
                   </div>
                 )}
@@ -143,12 +143,12 @@ export const DiGiBotModal: React.FC = () => {
             ))}
 
             {loading && (
-              <div className="flex gap-2 text-xs items-center text-[#737686]">
-                <div className="w-7 h-7 rounded-full bg-[#004ac6] text-white flex items-center justify-center shrink-0">
+              <div className="flex gap-2 text-xs items-center text-slate-500 dark:text-slate-400">
+                <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
                   <Bot className="w-4 h-4" />
                 </div>
-                <div className="p-3 bg-white border border-[#e1e2ed] rounded-2xl rounded-bl-none shadow-sm flex items-center gap-1.5">
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#004ac6]" />
+                <div className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-1.5">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600 dark:text-blue-400" />
                   <span>DiGi Bot is thinking...</span>
                 </div>
               </div>
@@ -157,43 +157,43 @@ export const DiGiBotModal: React.FC = () => {
           </div>
 
           {/* Quick Prompt Presets */}
-          <div className="p-2 bg-white border-t border-[#e1e2ed] flex gap-1.5 overflow-x-auto">
+          <div className="p-2 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-1.5 overflow-x-auto">
             <button
-              onClick={() => handleSendMessage('Upcoming AI & Tech Events')}
-              className="px-2.5 py-1 rounded-full bg-[#eeefff] text-[#004ac6] hover:bg-[#004ac6] hover:text-white text-[10px] font-bold shrink-0 transition-colors"
+              onClick={() => handleSendMessage('Recommend top Web Dev internships')}
+              className="px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300 hover:bg-blue-600 hover:text-white text-[10px] font-bold shrink-0 transition-colors border border-blue-200 dark:border-blue-800"
             >
-              🚀 Tech Events
+              💼 Recommend Internships
             </button>
             <button
-              onClick={() => handleSendMessage('How to get my certificate')}
-              className="px-2.5 py-1 rounded-full bg-[#eeefff] text-[#004ac6] hover:bg-[#004ac6] hover:text-white text-[10px] font-bold shrink-0 transition-colors"
+              onClick={() => handleSendMessage('How do I calculate my resume match score?')}
+              className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white text-[10px] font-bold shrink-0 transition-colors border border-emerald-200 dark:border-emerald-800"
             >
-              📜 Certificates
+              ✨ Resume Match Score
             </button>
             <button
-              onClick={() => handleSendMessage('Campus Venues & Auditoriums')}
-              className="px-2.5 py-1 rounded-full bg-[#eeefff] text-[#004ac6] hover:bg-[#004ac6] hover:text-white text-[10px] font-bold shrink-0 transition-colors"
+              onClick={() => handleSendMessage('How to download my PDF Academic Report?')}
+              className="px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300 hover:bg-purple-600 hover:text-white text-[10px] font-bold shrink-0 transition-colors border border-purple-200 dark:border-purple-800"
             >
-              📍 Venues
+              📄 PDF Report
             </button>
           </div>
 
           {/* Input Box */}
           <form
             onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-            className="p-3 bg-white border-t border-[#e1e2ed] flex items-center gap-2"
+            className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2"
           >
             <input
               type="text"
-              placeholder="Ask DiGi Bot about campus events..."
+              placeholder="Ask DiGi Bot..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="flex-1 px-3.5 py-2 bg-[#f3f3fe] border border-transparent rounded-xl text-xs focus:outline-none focus:border-[#004ac6] text-[#191b23]"
+              className="flex-1 px-3.5 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-600 text-slate-900 dark:text-white placeholder-slate-400"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="p-2 rounded-xl bg-[#004ac6] text-white hover:bg-[#2563eb] disabled:opacity-40 transition-all shadow-sm"
+              className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition-all shadow-sm"
             >
               <Send className="w-4 h-4" />
             </button>
