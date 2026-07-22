@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('campuspulse_token');
+    const token = localStorage.getItem('digi_internship_token');
     if (token) {
       api.getMe()
         .then(userData => setUser(userData))
@@ -60,13 +60,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     const data = await api.login(email, password);
-    setUser(data.user);
+    if (data.user) setUser(data.user);
     setAuthModalOpen(false);
   };
 
   const register = async (userData: { name: string; email: string; password: string; role?: string; department?: string }) => {
     const data = await api.register(userData);
-    setUser(data.user);
+    if (data.user) setUser(data.user);
     setAuthModalOpen(false);
   };
 

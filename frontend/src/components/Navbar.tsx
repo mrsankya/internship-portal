@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Briefcase, Search, User as UserIcon, Award, LogOut, Sparkles, Shield, Trophy, Sun, Moon, BarChart3 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Briefcase, Search, User as UserIcon, Award, LogOut, Sparkles, Shield, Trophy, Sun, Moon, BarChart3, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ProfileModal } from './ProfileModal';
 import { LeaderboardModal } from './LeaderboardModal';
+import { NotificationModal } from './NotificationModal';
+import { api } from '../services/api';
 
 interface NavbarProps {
   currentTab: 'discovery' | 'search' | 'dashboard' | 'admin';
@@ -15,7 +17,25 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
   const { user, logout, openAuthModal, theme, toggleTheme } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-  
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    try {
+      const res = await api.getNotifications();
+      setUnreadCount(res.unreadCount || 0);
+    } catch (e) {
+      // Ignore background fetch errors
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, [user]);
+
   const isMentorOrAdmin = user && (
     user.role === 'institution_admin' || 
     user.role === 'company_mentor' || 
@@ -28,6 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
     if (role === 'company_mentor' || role === 'coordinator') return 'Company Mentor';
     return 'Intern';
   };
+
 
   return (
     <>
@@ -133,6 +154,22 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
               </button>
             )}
 
+            {/* Notification Bell Button */}
+            {user && (
+              <button
+                onClick={() => setNotificationOpen(true)}
+                title="Notifications"
+                className="relative p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:scale-105 active:scale-95 transition-all shadow-xs flex items-center justify-center"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white font-extrabold text-[10px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 animate-pulse">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
+
             {/* Sun / Moon Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -196,6 +233,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
         isOpen={leaderboardOpen}
         onClose={() => setLeaderboardOpen(false)}
       />
+
+      {/* In-App Notifications Modal */}
+      <NotificationModal
+        isOpen={notificationOpen}
+        onClose={() => setNotificationOpen(false)}
+        onNotificationsUpdated={fetchUnreadCount}
+      />
     </>
   );
 };
+

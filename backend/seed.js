@@ -4,6 +4,11 @@ const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Internship = require('./models/Internship');
 const Registration = require('./models/Registration');
+const Quiz = require('./models/Quiz');
+const QuizAttempt = require('./models/QuizAttempt');
+const VideoLesson = require('./models/VideoLesson');
+const VideoProgress = require('./models/VideoProgress');
+const Notification = require('./models/Notification');
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -21,7 +26,13 @@ async function seedData() {
     await User.deleteMany({});
     await Internship.deleteMany({});
     await Registration.deleteMany({});
+    await Quiz.deleteMany({});
+    await QuizAttempt.deleteMany({});
+    await VideoLesson.deleteMany({});
+    await VideoProgress.deleteMany({});
+    await Notification.deleteMany({});
     console.log('Cleared existing data.');
+
 
     // Create demo users
     const salt = await bcrypt.genSalt(10);
@@ -315,6 +326,145 @@ async function seedData() {
 
     console.log('Seeded demo internship application and progress records for Alex Rivera.');
 
+    // Seed sample Quizzes for Full-Stack AI Engineer Intern
+    const quiz1 = await Quiz.create({
+      internshipId: insertedInternships[0]._id,
+      title: 'React & Node.js Microservices Checkpoint',
+      description: 'Test your understanding of RESTful routing, Express middleware, and React state management.',
+      moduleName: 'Week 1-2 Skill Checkpoint',
+      durationMinutes: 10,
+      passingScore: 70,
+      xpReward: 150,
+      questions: [
+        {
+          question: 'What is the primary role of middleware in Express.js?',
+          options: [
+            'To directly render HTML templates',
+            'To execute functions with access to req, res, and next objects',
+            'To store database records in memory',
+            'To compress images automatically'
+          ],
+          correctAnswer: 1,
+          explanation: 'Express middleware functions process request/response objects before passing control to the next middleware.'
+        },
+        {
+          question: 'Which Hook in React is recommended for performing side-effects like API data fetching?',
+          options: ['useMemo', 'useState', 'useEffect', 'useCallback'],
+          correctAnswer: 2,
+          explanation: 'useEffect is used for side-effects such as subscriptions, DOM mutations, and data fetching.'
+        },
+        {
+          question: 'In REST API design, which HTTP method should be used for updating existing resource fields?',
+          options: ['GET', 'POST', 'PATCH', 'DELETE'],
+          correctAnswer: 2,
+          explanation: 'PATCH is standard for partial updates of existing resources, whereas PUT is for full replacement.'
+        }
+      ],
+      createdById: mentorUser._id
+    });
+
+    const quiz2 = await Quiz.create({
+      internshipId: insertedInternships[0]._id,
+      title: 'AI Model Integration & Vector Embeddings',
+      description: 'Evaluate knowledge on RAG pipelines, OpenAI API integrations, and vector database retrieval.',
+      moduleName: 'Week 4-5 Advanced Checkpoint',
+      durationMinutes: 15,
+      passingScore: 75,
+      xpReward: 200,
+      questions: [
+        {
+          question: 'What is the function of Vector Embeddings in AI applications?',
+          options: [
+            'To encrypt API keys securely',
+            'To represent text/data as dense numerical vectors for semantic similarity search',
+            'To compile TypeScript to WebAssembly',
+            'To format JSON responses'
+          ],
+          correctAnswer: 1,
+          explanation: 'Vector embeddings map text into high-dimensional space so semantic similarity can be computed via cosine distance.'
+        },
+        {
+          question: 'What does RAG stand for in modern AI architecture?',
+          options: [
+            'Realtime API Gateway',
+            'Retrieval-Augmented Generation',
+            'Reactive Application Graph',
+            'Random Algorithmic Generator'
+          ],
+          correctAnswer: 1,
+          explanation: 'Retrieval-Augmented Generation enhances LLM prompts with relevant external documents retrieved from a database.'
+        }
+      ],
+      createdById: mentorUser._id
+    });
+
+    // Seed sample Video Lessons for Full-Stack AI Engineer Intern
+    await VideoLesson.create({
+      internshipId: insertedInternships[0]._id,
+      title: '1. Orientation & Architecture Overview',
+      description: 'Get started with the DiGi Campus stack, setup guide, git workflow, and cloud architecture.',
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Sample video link
+      thumbnail: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600',
+      duration: '12:45',
+      moduleName: 'Module 1: Orientation',
+      order: 1,
+      createdById: mentorUser._id
+    });
+
+    await VideoLesson.create({
+      internshipId: insertedInternships[0]._id,
+      title: '2. Building Scalable Microservices with Node.js & Express',
+      description: 'Deep dive into controller patterns, JWT authentication, rate limiting, and MongoDB indexing.',
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600',
+      duration: '18:30',
+      moduleName: 'Module 2: Microservices & DB',
+      order: 2,
+      createdById: mentorUser._id
+    });
+
+    await VideoLesson.create({
+      internshipId: insertedInternships[0]._id,
+      title: '3. Integrating AI & Vector Stores in Production',
+      description: 'Learn how to connect LLMs, embed documents, and present AI responses in React.',
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600',
+      duration: '22:15',
+      moduleName: 'Module 3: AI Integration',
+      order: 3,
+      createdById: mentorUser._id
+    });
+
+    // Seed sample Notifications
+    await Notification.create({
+      userId: internUser._id,
+      title: '🚀 Welcome to Full-Stack AI Engineer Internship!',
+      message: 'Your application has been accepted. Access your weekly tasks, video lessons, and checkpoint quizzes.',
+      type: 'application',
+      link: `/event/${insertedInternships[0]._id}`,
+      isRead: false
+    });
+
+    await Notification.create({
+      userId: internUser._id,
+      title: '📝 New Quiz Available: React & Node.js Checkpoint',
+      message: 'Test your understanding and earn +150 XP towards your level progression.',
+      type: 'quiz',
+      link: `/event/${insertedInternships[0]._id}`,
+      isRead: false
+    });
+
+    await Notification.create({
+      userId: null, // Broadcast
+      title: '📢 Institutional Announcement: Mid-Term Progress Audits',
+      message: 'All interns are required to submit their weekly progress report by Friday 5:00 PM for institutional review.',
+      type: 'announcement',
+      link: '/admin',
+      isRead: false
+    });
+
+    console.log('Seeded sample quizzes, video lessons, and notifications successfully.');
+
     process.exit(0);
   } catch (err) {
     console.error('Error seeding data:', err);
@@ -323,3 +473,4 @@ async function seedData() {
 }
 
 seedData();
+

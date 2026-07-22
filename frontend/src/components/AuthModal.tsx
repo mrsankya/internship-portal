@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Sparkles, User, Lock, Mail, Building, Key, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { OTPModal } from './OTPModal';
 
 declare global {
   interface Window {
@@ -19,6 +20,10 @@ export const AuthModal: React.FC = () => {
   const [role, setRole] = useState<'intern' | 'company_mentor' | 'institution_admin'>('intern');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // OTP Verification state
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1017306337957-vlfdit0hq2v1hf6vca825m8t00v7rcs7.apps.googleusercontent.com';
 
@@ -45,7 +50,7 @@ export const AuthModal: React.FC = () => {
     }
   }, [authModalOpen, googleClientId]);
 
-  if (!authModalOpen) return null;
+  if (!authModalOpen && !otpModalOpen) return null;
 
   const handleGoogleResponse = async (response: any) => {
     setError('');
@@ -78,9 +83,23 @@ export const AuthModal: React.FC = () => {
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        const res = await api.login(email, password);
+        if (res.requiresVerification && res.email) {
+          setUnverifiedEmail(res.email);
+          setOtpModalOpen(true);
+          closeAuthModal();
+          return;
+        }
+        window.location.reload();
       } else {
-        await register({ name, email, password, role, department });
+        const res = await api.register({ name, email, password, role, department });
+        if (res.requiresVerification && res.email) {
+          setUnverifiedEmail(res.email);
+          setOtpModalOpen(true);
+          closeAuthModal();
+          return;
+        }
+        window.location.reload();
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during authentication');
@@ -346,6 +365,16 @@ export const AuthModal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      <OTPModal
+        isOpen={otpModalOpen}
+        email={unverifiedEmail}
+        onClose={() => setOtpModalOpen(false)}
+        onVerifiedSuccess={(token, user) => {
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };

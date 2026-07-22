@@ -60,6 +60,11 @@ export interface InternshipItem {
   isFeatured?: boolean;
   milestones?: Milestone[];
   mentors?: Mentor[];
+  approvalStatus?: 'Approved' | 'Pending' | 'Rejected';
+  flierUrl?: string;
+  rawTextSource?: string;
+  submittedById?: User;
+  xpAwarded?: boolean;
   // Legacy backward compatibility fields
   category?: string;
   date?: string;
@@ -160,7 +165,94 @@ export interface InstitutionAnalytics {
   }>;
 }
 
+export interface NotificationItem {
+  _id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'quiz' | 'video' | 'application' | 'certificate' | 'announcement';
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface QuizQuestion {
+  _id?: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+}
+
+export interface QuizItem {
+  _id: string;
+  internshipId: string | InternshipItem;
+  title: string;
+  description?: string;
+  moduleName: string;
+  durationMinutes: number;
+  passingScore: number;
+  xpReward: number;
+  questions: QuizQuestion[];
+  createdAt?: string;
+}
+
+export interface QuizAttemptItem {
+  _id: string;
+  quizId: QuizItem;
+  userId: string;
+  internshipId: string | InternshipItem;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  passed: boolean;
+  xpEarned: number;
+  completedAt: string;
+  answers?: Array<{
+    questionIndex: number;
+    selectedOption: number;
+    isCorrect: boolean;
+    correctAnswer?: number;
+    explanation?: string;
+  }>;
+}
+
+export interface VideoLessonItem {
+  _id: string;
+  internshipId: string;
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnail?: string;
+  duration: string;
+  moduleName: string;
+  order: number;
+  userProgress?: {
+    isCompleted: boolean;
+    watchedPercentage: number;
+  };
+  createdAt?: string;
+}
+
+export interface VideoProgressSummary {
+  lessons: VideoLessonItem[];
+  summary: {
+    completedCount: number;
+    totalCount: number;
+    overallProgress: number;
+  };
+}
+
+export interface ResumeMatchResult {
+  success: boolean;
+  matchPercentage: number;
+  matchingSkills: string[];
+  missingSkills: string[];
+  readinessLevel: 'High Match' | 'Moderate Match' | 'Skills Needed';
+  aiRecommendations: string[];
+}
+
 // Resolution for API Base URL
+
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -172,7 +264,7 @@ const getApiBaseUrl = () => {
 const API_BASE = getApiBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('campuspulse_token');
+  const token = localStorage.getItem('digi_internship_token');
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -199,26 +291,66 @@ async function parseResponse(res: Response) {
 
 export const api = {
   // Auth & Profile
-  async login(email: string, password: string): Promise<{ token: string; user: User }> {
+  async login(email: string, password: string): Promise<{ token?: string; user?: User; requiresVerification?: boolean; email?: string; message?: string }> {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await parseResponse(res);
-    localStorage.setItem('campuspulse_token', data.token);
+    
+    // Check for 403 unverified status without throwing generic error
+    const text = await res.text();
+    let data: any = {};
+    if (text) {
+      try { data = JSON.parse(text); } catch (e) { data = { message: text }; }
+    }
+    
+    if (res.status === 403 && data.requiresVerification) {
+      return data;
+    }
+    if (!res.ok) {
+      throw new Error(data.message || `Server returned status ${res.status}`);
+    }
+
+    if (data.token) {
+      localStorage.setItem('digi_internship_token', data.token);
+    }
     return data;
   },
 
-  async register(userData: { name: string; email: string; password: string; role?: string; department?: string; studentId?: string; company?: string }): Promise<{ token: string; user: User }> {
+  async register(userData: { name: string; email: string; password: string; role?: string; department?: string; studentId?: string; company?: string }): Promise<{ requiresVerification?: boolean; email?: string; message?: string; token?: string; user?: User }> {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
     });
     const data = await parseResponse(res);
-    localStorage.setItem('campuspulse_token', data.token);
+    if (data.token) {
+      localStorage.setItem('digi_internship_token', data.token);
+    }
     return data;
+  },
+
+  async verifyOTP(email: string, otpCode: string): Promise<{ token: string; user: User; message: string }> {
+    const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otpCode })
+    });
+    const data = await parseResponse(res);
+    if (data.token) {
+      localStorage.setItem('digi_internship_token', data.token);
+    }
+    return data;
+  },
+
+  async resendOTP(email: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/auth/resend-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    return await parseResponse(res);
   },
 
   async loginWithGoogle(googleData: { email: string; name: string; avatar?: string; role?: string; department?: string }): Promise<{ token: string; user: User }> {
@@ -228,7 +360,7 @@ export const api = {
       body: JSON.stringify(googleData)
     });
     const data = await parseResponse(res);
-    localStorage.setItem('campuspulse_token', data.token);
+    localStorage.setItem('digi_internship_token', data.token);
     return data;
   },
 
@@ -249,7 +381,7 @@ export const api = {
   },
 
   logout() {
-    localStorage.removeItem('campuspulse_token');
+    localStorage.removeItem('digi_internship_token');
   },
 
   // Internships
@@ -551,5 +683,178 @@ export const api = {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  },
+
+  // Notifications API
+  async getNotifications(): Promise<{ notifications: NotificationItem[]; unreadCount: number }> {
+    const res = await fetch(`${API_BASE}/notifications`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async markNotificationRead(id: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/notifications/${id}/read`, {
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async markAllNotificationsRead(): Promise<any> {
+    const res = await fetch(`${API_BASE}/notifications/read-all`, {
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async clearNotifications(): Promise<any> {
+    const res = await fetch(`${API_BASE}/notifications/clear`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async sendCustomEmailNotification(payload: { targetUserId?: string; title: string; message: string; actionUrl?: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/notifications/send-email`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    return await parseResponse(res);
+  },
+
+  // Quizzes API
+  async getQuizzes(internshipId?: string): Promise<QuizItem[]> {
+    const url = internshipId ? `${API_BASE}/quizzes?internshipId=${internshipId}` : `${API_BASE}/quizzes`;
+    const res = await fetch(url);
+    return await parseResponse(res);
+  },
+
+  async getQuizById(id: string): Promise<QuizItem> {
+    const res = await fetch(`${API_BASE}/quizzes/${id}`);
+    return await parseResponse(res);
+  },
+
+  async getMyQuizAttempts(): Promise<QuizAttemptItem[]> {
+    const res = await fetch(`${API_BASE}/quizzes/attempts/my`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async createQuiz(quizData: Partial<QuizItem>): Promise<QuizItem> {
+    const res = await fetch(`${API_BASE}/quizzes`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(quizData)
+    });
+    return await parseResponse(res);
+  },
+
+  async submitQuiz(quizId: string, answers: Array<{ questionIndex: number; selectedOption: number }>): Promise<any> {
+    const res = await fetch(`${API_BASE}/quizzes/${quizId}/submit`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ answers })
+    });
+    return await parseResponse(res);
+  },
+
+  async deleteQuiz(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/quizzes/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    await parseResponse(res);
+  },
+
+  // Videos API
+  async getVideosForInternship(internshipId: string): Promise<VideoProgressSummary> {
+    const res = await fetch(`${API_BASE}/videos/internship/${internshipId}`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async createVideoLesson(lessonData: Partial<VideoLessonItem>): Promise<VideoLessonItem> {
+    const res = await fetch(`${API_BASE}/videos`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(lessonData)
+    });
+    return await parseResponse(res);
+  },
+
+  async completeVideoLesson(id: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/videos/${id}/complete`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async deleteVideoLesson(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/videos/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    await parseResponse(res);
+  },
+
+  // AI Flier/WhatsApp Importer & Student Submission
+  async parseInternshipWithAI(payload: { text?: string; flierImage?: string }): Promise<{ success: boolean; parsedData: Partial<InternshipItem> }> {
+    const res = await fetch(`${API_BASE}/internships/parse-ai`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    return await parseResponse(res);
+  },
+
+  async submitStudentInternship(data: Partial<InternshipItem>): Promise<{ message: string; internship: InternshipItem }> {
+    const res = await fetch(`${API_BASE}/internships/submit-student`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return await parseResponse(res);
+  },
+
+  async getPendingInternships(): Promise<InternshipItem[]> {
+    const res = await fetch(`${API_BASE}/admin/pending-internships`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async approvePendingInternship(id: string): Promise<{ message: string; xpAwarded: number }> {
+    const res = await fetch(`${API_BASE}/admin/internships/${id}/approve`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async rejectPendingInternship(id: string, reason?: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/admin/internships/${id}/reject`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ reason })
+    });
+    return await parseResponse(res);
+  },
+
+  async matchResume(internshipId: string, resumeText: string, studentSkills?: string[]): Promise<ResumeMatchResult> {
+    const res = await fetch(`${API_BASE}/internships/${internshipId}/resume-match`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeText, studentSkills })
+    });
+    return await parseResponse(res);
   }
 };
+
+

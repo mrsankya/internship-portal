@@ -11,6 +11,9 @@ const adminRoutes = require('./routes/admin');
 const announcementRoutes = require('./routes/announcements');
 const feedbackRoutes = require('./routes/feedback');
 const botRoutes = require('./routes/bot');
+const notificationRoutes = require('./routes/notifications');
+const quizRoutes = require('./routes/quizzes');
+const videoRoutes = require('./routes/videos');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -75,6 +78,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/bot', botRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/quizzes', quizRoutes);
+app.use('/api/videos', videoRoutes);
+
 
 // Global Error Handler
 app.use((err, req, res, next) => {

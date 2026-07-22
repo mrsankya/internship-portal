@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
 import { CreateEventModal } from './components/CreateEventModal';
+import { SubmitInternshipModal } from './components/SubmitInternshipModal';
 import { DiGiBotModal } from './components/DiGiBotModal';
 import { EventDiscoveryPage } from './pages/EventDiscoveryPage';
 import { SearchEventsPage } from './pages/SearchEventsPage';
@@ -21,6 +22,7 @@ export function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchEvents = async () => {
@@ -67,6 +69,14 @@ export function AppContent() {
     }
   };
 
+  const handleOpenSubmitModal = () => {
+    if (!user) {
+      openAuthModal('login');
+    } else {
+      setSubmitModalOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors">
       {/* Top Navbar */}
@@ -97,6 +107,7 @@ export function AppContent() {
             onSelectEvent={handleSelectEvent}
             onExploreCategory={handleExploreCategory}
             onQuickRegister={handleQuickRegister}
+            onOpenSubmitModal={handleOpenSubmitModal}
             key={refreshTrigger}
           />
         ) : currentTab === 'search' ? (
@@ -133,6 +144,11 @@ export function AppContent() {
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onEventCreated={triggerRefresh}
+      />
+      <SubmitInternshipModal
+        isOpen={submitModalOpen}
+        onClose={() => setSubmitModalOpen(false)}
+        onSubmitted={triggerRefresh}
       />
       <DiGiBotModal />
     </div>

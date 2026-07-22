@@ -41,6 +41,11 @@ const internshipSchema = new mongoose.Schema({
   milestones: [milestoneSchema],
   mentors: [mentorSchema],
   createdById: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  submittedById: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  approvalStatus: { type: String, enum: ['Approved', 'Pending', 'Rejected'], default: 'Approved' },
+  flierUrl: { type: String, default: '' },
+  rawTextSource: { type: String, default: '' },
+  xpAwarded: { type: Boolean, default: false },
   // Backward compatibility fields for legacy views
   category: { type: String, default: 'Tech' },
   venue: { type: String, default: 'Virtual Workplace' },

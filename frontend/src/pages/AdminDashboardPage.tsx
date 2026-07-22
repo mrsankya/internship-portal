@@ -12,11 +12,12 @@ interface AdminDashboardPageProps {
 }
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventCreatedOrUpdated, onOpenCreateModal }) => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'users' | 'announcements'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'pending' | 'users' | 'announcements'>('analytics');
   
   // State
   const [analytics, setAnalytics] = useState<InstitutionAnalytics | null>(null);
   const [events, setEvents] = useState<InternshipItem[]>([]);
+  const [pendingEvents, setPendingEvents] = useState<InternshipItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
@@ -39,15 +40,17 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
 
   const loadAdminData = async () => {
     try {
-      const [analyticsData, eventsData, usersData, announcementsData] = await Promise.all([
+      const [analyticsData, eventsData, pendingData, usersData, announcementsData] = await Promise.all([
         api.getInstitutionAnalytics().catch(() => null),
         api.getInternships(),
+        api.getPendingInternships().catch(() => []),
         api.getAllUsers().catch(() => []),
         api.getAnnouncements().catch(() => [])
       ]);
 
       setAnalytics(analyticsData);
       setEvents(eventsData);
+      setPendingEvents(pendingData);
       setUsers(usersData);
       setAnnouncements(announcementsData);
     } catch (err) {
@@ -58,6 +61,28 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  const handleApprovePending = async (id: string) => {
+    try {
+      const res = await api.approvePendingInternship(id);
+      alert(`🎉 ${res.message} (+${res.xpAwarded} XP awarded to student!)`);
+      await loadAdminData();
+      onEventCreatedOrUpdated();
+    } catch (err: any) {
+      alert(err.message || 'Failed to approve internship');
+    }
+  };
+
+  const handleRejectPending = async (id: string) => {
+    const reason = prompt('Reason for rejection (optional):');
+    try {
+      await api.rejectPendingInternship(id, reason || undefined);
+      alert('Submission rejected');
+      await loadAdminData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to reject submission');
+    }
+  };
 
   const handleDeleteEvent = async (id: string) => {
     if (!confirm('Are you sure you want to delete this internship position?')) return;
@@ -192,6 +217,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
           }`}
         >
           <Briefcase className="w-4 h-4" /> Internship Manager ({events.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`pb-3 px-4 text-xs font-black border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'pending' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <CheckCircle2 className="w-4 h-4 text-amber-500" /> Pending Student Submissions ({pendingEvents.length})
         </button>
         <button
           onClick={() => setActiveTab('users')}
@@ -379,6 +412,85 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Pending Student Submissions */}
+      {activeTab === 'pending' && (
+        <div className="space-y-6">
+          <div className="bg-amber-50 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <CheckCircle2 className="w-5 h-5 text-amber-600" />
+              <span>Review external internships posted by students. Approving a position publishes it to the directory and awards <strong>+200 XP</strong> & the <strong>🌟 Talent Scout Badge</strong> to the student!</span>
+            </div>
+          </div>
+
+          {pendingEvents.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl border border-slate-200 dark:border-slate-800 text-center text-slate-400">
+              <CheckCircle2 className="w-12 h-12 mx-auto text-slate-300 stroke-1 mb-2" />
+              <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No pending submissions</p>
+              <p className="text-xs text-slate-500">All student-submitted internship opportunities have been reviewed.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+              {pendingEvents.map((pe) => {
+                const submitter = (pe as any).submittedById;
+
+                return (
+                  <div key={pe._id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-start justify-between gap-6">
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-300">
+                          Pending Approval
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                          {pe.domain}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">{pe.title}</h3>
+                        <p className="text-xs font-bold text-blue-600 dark:text-blue-400">Company: {pe.company}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-4 text-xs font-medium text-slate-600 dark:text-slate-400">
+                        <span>Work Mode: <strong>{pe.workType || 'Remote'}</strong></span>
+                        <span>Stipend: <strong>{pe.stipend || 'Provided'}</strong></span>
+                        <span>Duration: <strong>{pe.duration || '3 Months'}</strong></span>
+                        <span>Location: <strong>{pe.location || 'Remote'}</strong></span>
+                      </div>
+
+                      <p className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl line-clamp-3">
+                        {pe.description}
+                      </p>
+
+                      {submitter && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                          <img src={submitter.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} alt={submitter.name} className="w-6 h-6 rounded-full object-cover" />
+                          <span className="text-slate-500 font-medium">Submitted by: <strong className="text-slate-800 dark:text-slate-200">{submitter.name}</strong> ({submitter.email})</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto">
+                      <button
+                        onClick={() => handleApprovePending(pe._id)}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Approve (+200 XP to Student)
+                      </button>
+                      <button
+                        onClick={() => handleRejectPending(pe._id)}
+                        className="px-5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <Trash2 className="w-4 h-4" /> Reject Submission
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

@@ -8,13 +8,15 @@ interface EventDiscoveryPageProps {
   onSelectEvent: (event: InternshipItem) => void;
   onExploreCategory: (category: string) => void;
   onQuickRegister: (event: InternshipItem) => void;
+  onOpenSubmitModal?: () => void;
 }
 
 export const EventDiscoveryPage: React.FC<EventDiscoveryPageProps> = ({
   events,
   onSelectEvent,
   onExploreCategory,
-  onQuickRegister
+  onQuickRegister,
+  onOpenSubmitModal
 }) => {
   const featuredEvent = events.find(e => e.isFeatured) || events[0];
   const upcomingEvents = events.filter(e => e._id !== featuredEvent?._id).slice(0, 6);
@@ -66,11 +68,21 @@ export const EventDiscoveryPage: React.FC<EventDiscoveryPageProps> = ({
                   <Flame className="w-5 h-5 fill-slate-950 text-slate-950" /> Apply & Reserve Internship Seat
                 </button>
 
+                {onOpenSubmitModal && (
+                  <button
+                    onClick={onOpenSubmitModal}
+                    className="px-6 py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    <Sparkles className="w-5 h-5 fill-slate-950 text-slate-950" />
+                    <span>+ Submit Opportunity (AI Importer) (+200 XP)</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => onSelectEvent(featuredEvent)}
                   className="px-6 py-4 rounded-xl bg-white/15 hover:bg-white/25 border border-white/30 text-white font-black text-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                 >
-                  <span>View Milestones & Details</span>
+                  <span>View Details</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

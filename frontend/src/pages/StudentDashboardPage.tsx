@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { TicketModal } from '../components/TicketModal';
 import { CertificateModal } from '../components/CertificateModal';
 import { ProfileModal } from '../components/ProfileModal';
+import { PDFReportModal } from '../components/PDFReportModal';
 
 interface StudentDashboardPageProps {
   onSelectEvent: (event: any) => void;
@@ -17,6 +18,7 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ onSe
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<Registration | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<Registration | null>(null);
+  const [selectedReportReg, setSelectedReportReg] = useState<Registration | null>(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   // Feedback State
@@ -200,10 +202,17 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ onSe
                       </button>
 
                       <button
+                        onClick={() => setSelectedReportReg(reg)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-black flex items-center gap-1 shadow-xs border border-slate-700"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-blue-400" /> 📄 PDF Report
+                      </button>
+
+                      <button
                         onClick={() => setSelectedTicket(reg)}
                         className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black flex items-center gap-1 shadow-xs"
                       >
-                        <QrCode className="w-3.5 h-3.5" /> QR Verification Code
+                        <QrCode className="w-3.5 h-3.5" /> QR Pass
                       </button>
                     </div>
 
@@ -248,6 +257,13 @@ export const StudentDashboardPage: React.FC<StudentDashboardPageProps> = ({ onSe
       <ProfileModal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
+      />
+
+      {/* Official Academic PDF Performance Audit Report Modal */}
+      <PDFReportModal
+        isOpen={Boolean(selectedReportReg)}
+        registration={selectedReportReg}
+        onClose={() => setSelectedReportReg(null)}
       />
     </div>
   );

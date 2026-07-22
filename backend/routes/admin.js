@@ -197,4 +197,104 @@ router.put('/users/:id/status', async (req, res) => {
   }
 });
 
+// GET /api/admin/pending-internships - List student-submitted internships awaiting approval
+router.get('/pending-internships', async (req, res) => {
+  try {
+    const pending = await Internship.find({ approvalStatus: 'Pending' })
+      .populate('submittedById', 'name email department studentId avatar')
+      .sort({ createdAt: -1 });
+    res.json(pending);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching pending submissions', error: err.message });
+  }
+});
+
+// PATCH /api/admin/internships/:id/approve - Approve student submission, award +200 XP & Talent Scout Badge
+router.post('/internships/:id/approve', async (req, res) => {
+  try {
+    const internship = await Internship.findById(req.params.id);
+    if (!internship) {
+      return res.status(404).json({ message: 'Internship position not found' });
+    }
+
+    internship.approvalStatus = 'Approved';
+    internship.status = 'Open';
+    await internship.save();
+
+    // Award +200 XP to the submitting student if not awarded yet
+    let xpEarned = 0;
+    if (internship.submittedById && !internship.xpAwarded) {
+      const student = await User.findById(internship.submittedById);
+      if (student) {
+        xpEarned = 200;
+        student.xpPoints = (student.xpPoints || 0) + xpEarned;
+        if (!student.badges.includes('🌟 Talent Scout')) {
+          student.badges.push('🌟 Talent Scout');
+        }
+        await student.save();
+
+        // Create In-App Notification for student
+        const Notification = require('../models/Notification');
+        await Notification.create({
+          userId: student._id,
+          title: '🌟 Internship Submission Approved (+200 XP)!',
+          message: `Your submitted position "${internship.title}" at ${internship.company} was approved by Admin! You earned +200 XP & unlocked the 🌟 Talent Scout badge!`,
+          type: 'success',
+          link: `/event/${internship._id}`
+        });
+
+        // Email Student via Resend
+        const { sendNotificationEmail } = require('../utils/emailService');
+        sendNotificationEmail({
+          email: student.email,
+          name: student.name,
+          title: '🎉 Submission Approved (+200 XP & Badge Earned)',
+          message: `Congratulations! Your submitted internship position "${internship.title}" at ${internship.company} has been approved by the placement office and is now live for all students. +200 XP has been added to your profile!`
+        }).catch(e => console.error('Email error:', e.message));
+      }
+
+      internship.xpAwarded = true;
+      await internship.save();
+    }
+
+    res.json({
+      message: 'Internship approved and published to student directory!',
+      internship,
+      xpAwarded: xpEarned
+    });
+  } catch (err) {
+    console.error('Approve internship error:', err);
+    res.status(500).json({ message: 'Error approving internship', error: err.message });
+  }
+});
+
+// POST /api/admin/internships/:id/reject - Reject student submission
+router.post('/internships/:id/reject', async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const internship = await Internship.findById(req.params.id);
+    if (!internship) {
+      return res.status(404).json({ message: 'Internship position not found' });
+    }
+
+    internship.approvalStatus = 'Rejected';
+    await internship.save();
+
+    if (internship.submittedById) {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        userId: internship.submittedById,
+        title: '⚠️ Internship Submission Update',
+        message: `Your submission "${internship.title}" was not approved by placement office. ${reason ? `Reason: ${reason}` : ''}`,
+        type: 'warning'
+      });
+    }
+
+    res.json({ message: 'Internship submission rejected', internship });
+  } catch (err) {
+    res.status(500).json({ message: 'Error rejecting internship', error: err.message });
+  }
+});
+
 module.exports = router;
+
