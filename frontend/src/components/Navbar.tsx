@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Search, User as UserIcon, Award, LogOut, Sparkles, Shield, Trophy, Sun, Moon, BarChart3, Bell } from 'lucide-react';
+import { Briefcase, Search, User as UserIcon, Award, LogOut, Sparkles, Shield, Trophy, Sun, Moon, BarChart3, Bell, Compass, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { ProfileModal } from './ProfileModal';
 import { LeaderboardModal } from './LeaderboardModal';
@@ -44,35 +44,36 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
   );
 
   const formatRoleName = (role?: string) => {
-    if (role === 'institution_admin' || role === 'admin') return 'Institution Admin';
-    if (role === 'company_mentor' || role === 'coordinator') return 'Company Mentor';
+    if (role === 'institution_admin' || role === 'admin') return 'Admin';
+    if (role === 'company_mentor' || role === 'coordinator') return 'Mentor';
     return 'Intern';
   };
 
-
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white dark:bg-[#090d16] border-b border-slate-200 dark:border-slate-800 transition-colors shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      {/* Top Header Bar */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
+          
           {/* Brand Logo */}
           <div 
             onClick={() => setCurrentTab('discovery')} 
-            className="flex items-center gap-2.5 cursor-pointer group"
+            className="flex items-center gap-2 cursor-pointer group shrink-0"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <Briefcase className="w-5 h-5 text-emerald-300" />
             </div>
             <div>
-              <span className="text-xl font-extrabold font-heading text-slate-900 dark:text-white">
+              <span className="text-base sm:text-xl font-extrabold font-heading text-slate-900 dark:text-white">
                 DiGi Internship
               </span>
-              <span className="hidden sm:inline-block ml-2 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+              <span className="hidden sm:inline-block ml-1.5 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                 Portal
               </span>
             </div>
           </div>
 
-          {/* Global Quick Search */}
+          {/* Desktop Global Search Bar */}
           <div className="hidden md:flex flex-1 max-w-md relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -86,8 +87,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
             />
           </div>
 
-          {/* Nav Links */}
-          <nav className="flex items-center gap-1 sm:gap-2">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-2">
             <button
               onClick={() => setCurrentTab('discovery')}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -97,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
               }`}
             >
               <Briefcase className="w-4 h-4" />
-              <span className="hidden sm:inline">Internships</span>
+              <span>Internships</span>
             </button>
 
             <button
@@ -109,16 +110,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
               }`}
             >
               <Search className="w-4 h-4" />
-              <span className="hidden sm:inline">Explore Domains</span>
+              <span>Explore Domains</span>
             </button>
 
             <button
               onClick={() => {
-                if (!user) {
-                  openAuthModal('login');
-                } else {
-                  setCurrentTab('dashboard');
-                }
+                if (!user) openAuthModal('login');
+                else setCurrentTab('dashboard');
               }}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 currentTab === 'dashboard' 
@@ -127,19 +125,17 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
               }`}
             >
               <Award className="w-4 h-4" />
-              <span className="hidden sm:inline">Intern Dashboard</span>
+              <span>Intern Dashboard</span>
             </button>
 
-            {/* Performance Ranks Button */}
             <button
               onClick={() => setLeaderboardOpen(true)}
               className="px-3 py-2 rounded-xl text-xs font-extrabold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 border border-amber-300 dark:border-amber-700 transition-all flex items-center gap-1.5"
             >
               <Trophy className="w-4 h-4 text-amber-600 fill-amber-400" />
-              <span className="hidden sm:inline">Performance</span>
+              <span>Performance</span>
             </button>
 
-            {/* Admin & Analytics Console Button */}
             {isMentorOrAdmin && (
               <button
                 onClick={() => setCurrentTab('admin')}
@@ -150,11 +146,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
                 }`}
               >
                 <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Analytics & Admin</span>
+                <span>Analytics & Admin</span>
               </button>
             )}
+          </nav>
 
-            {/* Notification Bell Button */}
+          {/* Right Header Action Icons (Always Visible & Optimized for Phone/Tablet) */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Notification Bell */}
             {user && (
               <button
                 onClick={() => setNotificationOpen(true)}
@@ -170,7 +169,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
               </button>
             )}
 
-            {/* Sun / Moon Theme Toggle */}
+            {/* Sun / Moon Theme Toggle Button */}
             <button
               onClick={toggleTheme}
               title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
@@ -183,12 +182,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
               )}
             </button>
 
-            {/* User Profile / Auth Area */}
+            {/* User Profile Avatar & Sign Out */}
             {user ? (
-              <div className="flex items-center gap-2 ml-1">
+              <div className="flex items-center gap-1">
                 <div 
                   onClick={() => setProfileOpen(true)}
-                  className="flex items-center gap-2 cursor-pointer p-1 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+                  className="flex items-center gap-1.5 cursor-pointer p-0.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <img
                     src={user.avatar}
@@ -204,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
                 <button
                   onClick={logout}
                   title="Sign Out"
-                  className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-colors"
+                  className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-colors hidden sm:block"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -212,15 +211,82 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
             ) : (
               <button
                 onClick={() => openAuthModal('login')}
-                className="ml-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1"
               >
                 <UserIcon className="w-4 h-4" />
                 <span>Login</span>
               </button>
             )}
-          </nav>
+          </div>
         </div>
       </header>
+
+      {/* App-Like Mobile & Tablet Bottom Navigation Bar (Fixed at bottom for Mobile/Phone Viewports) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 py-1.5 px-2 flex items-center justify-around shadow-2xl">
+        <button
+          onClick={() => setCurrentTab('discovery')}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold transition-all ${
+            currentTab === 'discovery' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'
+          }`}
+        >
+          <Briefcase className="w-5 h-5 mb-0.5" />
+          <span>Internships</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentTab('search')}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold transition-all ${
+            currentTab === 'search' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'
+          }`}
+        >
+          <Compass className="w-5 h-5 mb-0.5" />
+          <span>Explore</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (!user) openAuthModal('login');
+            else setCurrentTab('dashboard');
+          }}
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold transition-all ${
+            currentTab === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'
+          }`}
+        >
+          <LayoutDashboard className="w-5 h-5 mb-0.5" />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          onClick={() => setLeaderboardOpen(true)}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold text-amber-600 dark:text-amber-400"
+        >
+          <Trophy className="w-5 h-5 mb-0.5 fill-amber-400 text-amber-500" />
+          <span>Ranks</span>
+        </button>
+
+        {isMentorOrAdmin ? (
+          <button
+            onClick={() => setCurrentTab('admin')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold transition-all ${
+              currentTab === 'admin' ? 'text-purple-600 dark:text-purple-400' : 'text-purple-500/80'
+            }`}
+          >
+            <BarChart3 className="w-5 h-5 mb-0.5" />
+            <span>Admin</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              if (!user) openAuthModal('login');
+              else setProfileOpen(true);
+            }}
+            className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold text-slate-500 dark:text-slate-400"
+          >
+            <UserIcon className="w-5 h-5 mb-0.5" />
+            <span>Profile</span>
+          </button>
+        )}
+      </div>
 
       {/* User Profile Modal */}
       <ProfileModal
@@ -243,4 +309,3 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
     </>
   );
 };
-
