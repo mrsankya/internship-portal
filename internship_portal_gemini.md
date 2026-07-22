@@ -1,11 +1,13 @@
-# DiGi Campus - Internship Verification, Monitoring & Analytics Platform - Project Memory
+# DiGi Internship - Verification, Monitoring & Analytics Platform - Project Memory
 
 ## Project Overview
-- **Project Name:** DiGi Campus Internship Hub (Internship Verification, Monitoring & Analytics Platform)
+- **Project Name:** DiGi Internship (Verification, Monitoring & Analytics Platform)
 - **Location:** `C:\Users\sanke\internship portal`
 - **Cloudflare Pages Production URL:** `https://digi-internship-hub.pages.dev`
+- **Render Production Backend API:** `https://internship-portal-it90.onrender.com/api`
+- **Native Android Package:** [DiGi_Internship.apk](file:///C:/Users/sanke/internship%20portal/DiGi_Internship.apk) (5.38 MB)
 - **Isolated MongoDB Database:** `digi_internship_db` (Separated from old `campuspulse` database)
-- **Architecture:** Node.js Express Backend (`/backend`), React + TypeScript + Vite Frontend (`/frontend`), MongoDB Atlas
+- **Architecture:** Node.js Express Backend (`/backend`), React + TypeScript + Vite Frontend (`/frontend`), Capacitor Android Native Wrapper (`/frontend/android`), MongoDB Atlas
 
 ## Roles & Terms Mapping
 1. **Student** → **Intern**
@@ -30,9 +32,11 @@
    - Google Client ID: `1017306337957-vlfdit0hq2v1hf6vca825m8t00v7rcs7.apps.googleusercontent.com`
    - Render Backend API: `https://internship-portal-it90.onrender.com/api`
    - One-tap Google Sign-In with automatic role assignment and Resend welcome emails (pre-verified).
-4. **Rate Limiting Protection**:
-   - Global rate limiter: 200 requests / 15 minutes.
-   - Auth rate limiter: 30 login/register/Google attempts / 15 minutes.
+4. **Capacitor Native Android Build**:
+   - Package Name: `com.digicampus.internship`
+   - App Display Name: **DiGi Internship**
+   - Configured with Android Studio JBR Java 17 & Android SDK.
+   - Generates executable debug APK directly to root: `DiGi_Internship.apk`.
 
 ## Key Capabilities & Features
 1. **Anti-Fake Email 6-Digit OTP Verification**:
@@ -49,43 +53,32 @@
    - Submissions are queued for Admin verification (`approvalStatus: 'Pending'`).
    - **Reward System**: Upon Admin approval, the submitting student is awarded **+200 XP**, unlocks the `🌟 Talent Scout` badge, receives a Resend confirmation email, and is featured on the Campus Leaderboard!
    - Admins manage pending submissions via the "Pending Student Submissions" queue in [AdminDashboardPage.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/pages/AdminDashboardPage.tsx).
-4. **Internship Directory & Application**:
-   - Filter internships by domain (Web Dev, AI/ML, Cloud, Data Science, Cyber Security, etc.), work type (Remote, On-site, Hybrid), and duration.
-   - Live progress bars showing overall internship completion %, total hours logged, and milestones achieved.
-5. **Task & Check-In Verification**:
+4. **App-Like Mobile Navigation & Header Optimization**:
+   - **Clean Top Header**: Logo + Dark/Light Theme Toggle + Notification Bell + User Profile Avatar / Login. Zero off-screen clipping on phone displays.
+   - **Fixed Bottom Navigation Bar**: 5 mobile tabs (**Internships, Explore, Dashboard, Ranks, Profile/Admin**) fixed at bottom on mobile/tablet viewports ([Navbar.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/components/Navbar.tsx)).
+   - **Shifted Floating AI Button**: Shifted up to `bottom-20` on mobile to float cleanly above the bottom navbar without overlaying buttons ([DiGiBotModal.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/components/DiGiBotModal.tsx)).
+5. **AI Resume & Skill Compatibility Matcher**:
+   - Backend endpoint `POST /api/internships/:id/resume-match` calculates `matchPercentage`, `matchingSkills`, `missingSkills`, `readinessLevel`, and `aiRecommendations`.
+   - Modal component [ResumeMatcherModal.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/components/ResumeMatcherModal.tsx) featuring interactive skill chips, custom skill adder, resume text input, animated SVG ring progress gauge (Green/Indigo/Amber), matched vs missing skill breakdown, and step-by-step actionable AI recommendations.
+6. **Academic & Performance PDF Report Generator**:
+   - [pdfReportGenerator.ts](file:///C:/Users/sanke/internship%20portal/frontend/src/utils/pdfReportGenerator.ts): High-resolution institutional PDF summary generator using `jspdf`. Includes institution header & seal, verification code (`REPORT-INT-XXXXXX`), student & internship profile info, progress & attendance metrics, quiz evaluation table, video watch progress, mentor score & qualitative feedback, and digital signature line.
+   - [PDFReportModal.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/components/PDFReportModal.tsx): Interactive modal component to preview all academic metrics and download/open official PDF reports.
+7. **Task & Check-In Verification**:
    - QR Code Check-In for intern daily/weekly task verification.
    - Live camera QR scanner modal with audio chime and instant verification status.
-6. **Progress Reporting & Mentor Feedback**:
-   - Intern submit progress reports (hours logged, tasks completed, proof/link).
-   - Mentors review, score (0-100), and leave qualitative feedback.
-7. **Email & In-App Notification System**:
-   - Real-time Bell icon notification drawer in Navbar with unread badge counter.
-   - Filters for All / Unread, Mark Read, and Clear Read notifications.
-   - Real-time notifications for quiz achievements, video completions, application status changes, certificates, and announcements.
 8. **Interactive Skill Assessment Quizzes**:
    - Quizzes attached per internship/module with countdown timer, question step indicators, and instant score evaluation.
    - Automatic XP rewards (+150 XP for passing), level-up progression, and unlockable badges (`🎯 Quiz Perfectionist`, `🧠 Knowledge Master`).
-   - Detailed question-by-question explanations during post-quiz review.
-   - Mentor/Admin Quiz Builder modal with question creator, custom passing score %, duration, and XP rewards.
 9. **Video Tutorials & Lesson Integrations**:
    - Dedicated "Video Lessons" tab in internship details page.
    - YouTube iframe embed parser, Vimeo, and direct MP4 playback support with custom thumbnail and duration badges.
-   - Fullscreen video modal with lesson playlist sidebar and watch status.
    - Interactive "Mark as Watched (+50 XP)" button with playlist watch progress bar.
-   - Mentor/Admin Video Builder modal to attach video lectures to internships.
-10. **Institution Analytics & Monitoring**:
-    - Interactive domain distribution charts, overall completion rate %, average performance scores, active vs completed internships.
-    - One-click CSV/Excel report generation for institutional audits and accreditation.
-11. **Performance Dashboard & Badges**:
-    - XP Leaderboard & Level progression for interns.
-    - Unlockable skill badges (e.g. Top Performer, Fast Learner, Verified Contributor, 🎬 Video Mastery, 🎯 Quiz Perfectionist, 🌟 Talent Scout).
-12. **Digital Certificates**:
+10. **Digital Certificates**:
     - Repurposed participation certificates into Verified Internship Completion Certificates with digital mentor signature, institutional seal, and QR verification code (`CERT-INT-XXXXXX`).
-13. **DiGi Bot AI Assistant**:
-    - AI assistant supporting internship progress tracking queries, mentor feedback summaries, and completion requirements.
-14. **AI Resume & Skill Compatibility Matcher**:
-    - Backend endpoint `POST /api/internships/:id/resume-match` calculates `matchPercentage`, `matchingSkills`, `missingSkills`, `readinessLevel`, and `aiRecommendations`.
-    - Modal component `ResumeMatcherModal.tsx` (`frontend/src/components/ResumeMatcherModal.tsx`) featuring interactive skill chips, custom skill adder, resume text input, animated SVG ring progress gauge (Green/Indigo/Amber), matched vs missing skill breakdown, and step-by-step actionable AI recommendations.
-15. **Academic & Performance PDF Report Generator**:
-    - `frontend/src/utils/pdfReportGenerator.ts`: High-resolution institutional PDF summary generator using `jspdf`. Includes institution header & seal, verification code (`REPORT-INT-XXXXXX`), student & internship profile info, progress & attendance metrics, quiz evaluation table, video watch progress, mentor score & qualitative feedback, and digital signature line.
-    - `frontend/src/components/PDFReportModal.tsx`: Interactive modal component to preview all academic metrics and download/open official PDF reports.
+
+## Next Steps / Proposed Future Upgrades
+1. **🎙️ AI Mock Technical Interview Simulator**: 3-question WebRTC/audio interview with AI scoring on technical accuracy & keyword coverage.
+2. **🐙 GitHub & Code Activity Tracker**: Automatic commit & pull request verification for tech internships.
+3. **📍 GPS Geofenced On-Site Attendance Check-In**: Verify physical presence within ~100m radius of office buildings for hybrid/on-site check-ins.
+4. **🗺️ Personalised Skill-Gap Learning Pathways**: Auto-convert missing skills from Resume Matcher into 4-week learning roadmaps.
+5. **💼 Corporate Recruiter & Placement Portal**: Allow corporate HR recruiters to browse verified top interns on the XP Leaderboard and send direct interview invites.
