@@ -1,0 +1,16 @@
+{
+  "short_name": "DiGi Campus",
+  "name": "DiGi Campus - Internship Verification, Monitoring & Analytics Platform",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192 64x64"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#090d16",
+  "theme_color": "#2563eb",
+  "display": "standalone",
+  "orientation": "portrait"
+}
