@@ -308,10 +308,10 @@ router.get('/settings', async (req, res) => {
   }
 });
 
-// PUT /api/admin/settings/demo-login - Toggle demo login state
-router.put('/settings/demo-login', async (req, res) => {
+// Toggle demo login state (supports both PUT and POST on /settings/demo-login and /demo-login)
+const handleDemoLoginToggle = async (req, res) => {
   try {
-    const { enabled } = req.body;
+    const { enabled } = req.body || {};
     let settings = await SystemConfig.getSettings();
     settings.demoLoginEnabled = Boolean(enabled);
     if (req.user && req.user.id) {
@@ -330,7 +330,12 @@ router.put('/settings/demo-login', async (req, res) => {
     console.error('Error updating demo login setting:', err);
     res.status(500).json({ message: 'Error updating demo login setting', error: err.message });
   }
-});
+};
+
+router.put('/settings/demo-login', handleDemoLoginToggle);
+router.post('/settings/demo-login', handleDemoLoginToggle);
+router.put('/demo-login', handleDemoLoginToggle);
+router.post('/demo-login', handleDemoLoginToggle);
 
 module.exports = router;
 

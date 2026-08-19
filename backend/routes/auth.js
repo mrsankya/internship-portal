@@ -375,4 +375,30 @@ router.get('/system-settings', async (req, res) => {
   }
 });
 
+// Direct Demo Login Mode Toggle (Fallback route)
+router.all('/demo-login', async (req, res) => {
+  try {
+    if (req.method === 'GET') {
+      const settings = await SystemConfig.getSettings();
+      return res.json({ demoLoginEnabled: !!settings.demoLoginEnabled });
+    }
+
+    const { enabled } = req.body || {};
+    let settings = await SystemConfig.getSettings();
+    settings.demoLoginEnabled = Boolean(enabled);
+    await settings.save();
+
+    res.json({
+      success: true,
+      demoLoginEnabled: settings.demoLoginEnabled,
+      message: settings.demoLoginEnabled 
+        ? '✅ Demo Login Mode is now ENABLED on the login screen.' 
+        : '🔒 Demo Login Mode is now DISABLED (Production Secure).'
+    });
+  } catch (err) {
+    console.error('Demo toggle error in auth.js:', err);
+    res.status(500).json({ message: 'Error toggling demo login setting', error: err.message });
+  }
+});
+
 module.exports = router;
