@@ -84,6 +84,10 @@
      - **Browser Close Logout**: Replaced persistent `localStorage` with `sessionStorage` for token and session storage. When the user closes the browser or tab, their session is automatically destroyed.
      - **Inactivity Timeout**: Active session timestamp tracking auto-expires idle sessions after 60 minutes of inactivity and clears credentials with an auto-logout alert.
      - **DevTools & Right-Click Protection**: Context menu and developer inspection shortcuts (`F12`, `Ctrl+Shift+I/J/C`, `Ctrl+U`, `Ctrl+S`) are prevented globally.
+13. **Dedicated Root Super Admin (`sanketbhende0@gmail.com`)**:
+     - **Sole Root Super Admin**: `sanketbhende0@gmail.com` is configured as the one and only protected Super Administrator with full institutional immunity.
+     - **Self Password Management**: Dedicated card in the Super Admin console allows instant master password changes with minimum 6 characters and password confirmation.
+     - **User Master Password Resets**: Super Admin can reset the password of any user in the system on demand.
 
 ## Next Steps / Proposed Future Upgrades
 1. **🎙️ AI Mock Technical Interview Simulator**: 3-question WebRTC/audio interview with AI scoring on technical accuracy & keyword coverage.
