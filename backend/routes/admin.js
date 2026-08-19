@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const Internship = require('../models/Internship');
 const Registration = require('../models/Registration');
+const SystemConfig = require('../models/SystemConfig');
 const { auth, authorizeRoles } = require('../middleware/auth');
 const bcrypt = require('bcryptjs');
 
@@ -293,6 +294,41 @@ router.post('/internships/:id/reject', async (req, res) => {
     res.json({ message: 'Internship submission rejected', internship });
   } catch (err) {
     res.status(500).json({ message: 'Error rejecting internship', error: err.message });
+  }
+});
+
+// GET /api/admin/settings - Retrieve System Settings
+router.get('/settings', async (req, res) => {
+  try {
+    const settings = await SystemConfig.getSettings();
+    res.json(settings);
+  } catch (err) {
+    console.error('Error fetching admin settings:', err);
+    res.status(500).json({ message: 'Error fetching system settings', error: err.message });
+  }
+});
+
+// PUT /api/admin/settings/demo-login - Toggle demo login state
+router.put('/settings/demo-login', async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    let settings = await SystemConfig.getSettings();
+    settings.demoLoginEnabled = Boolean(enabled);
+    if (req.user && req.user.id) {
+      settings.updatedBy = req.user.id;
+    }
+    await settings.save();
+
+    res.json({
+      success: true,
+      demoLoginEnabled: settings.demoLoginEnabled,
+      message: settings.demoLoginEnabled 
+        ? '✅ Demo Login Mode is now ENABLED on the login screen.' 
+        : '🔒 Demo Login Mode is now DISABLED (Production Secure).'
+    });
+  } catch (err) {
+    console.error('Error updating demo login setting:', err);
+    res.status(500).json({ message: 'Error updating demo login setting', error: err.message });
   }
 });
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const SystemConfig = require('../models/SystemConfig');
 const { auth } = require('../middleware/auth');
 const { sendWelcomeEmail, sendLoginNotificationEmail, sendOTPEmail } = require('../utils/emailService');
 
@@ -358,6 +359,19 @@ router.put('/profile', auth, async (req, res) => {
   } catch (err) {
     console.error('Profile update error:', err);
     res.status(500).json({ message: 'Error updating profile', error: err.message });
+  }
+});
+
+// Public System Settings (e.g., Demo Login Mode status)
+router.get('/system-settings', async (req, res) => {
+  try {
+    const settings = await SystemConfig.getSettings();
+    res.json({
+      demoLoginEnabled: !!settings.demoLoginEnabled
+    });
+  } catch (err) {
+    console.error('System settings fetch error:', err);
+    res.json({ demoLoginEnabled: false });
   }
 });
 

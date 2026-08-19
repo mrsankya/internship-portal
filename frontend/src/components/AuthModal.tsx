@@ -11,7 +11,7 @@ declare global {
 }
 
 export const AuthModal: React.FC = () => {
-  const { authModalOpen, authModalMode, closeAuthModal, login, register } = useAuth();
+  const { authModalOpen, authModalMode, closeAuthModal, login, register, demoLoginEnabled } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>(authModalMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -331,38 +331,45 @@ export const AuthModal: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Login Preset Buttons */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
-              <Key className="w-3.5 h-3.5 text-blue-600" /> Quick Demo Logins
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={handleDemoStudent}
-                disabled={loading}
-                className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[11px] font-black text-slate-900 dark:text-white hover:border-blue-600 transition-colors"
-              >
-                🎓 Intern Demo
-              </button>
-              <button
-                type="button"
-                onClick={handleDemoMentor}
-                disabled={loading}
-                className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[11px] font-black text-slate-900 dark:text-white hover:border-blue-600 transition-colors"
-              >
-                💼 Mentor Demo
-              </button>
-              <button
-                type="button"
-                onClick={handleDemoAdmin}
-                disabled={loading}
-                className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[11px] font-black text-slate-900 dark:text-white hover:border-blue-600 transition-colors"
-              >
-                ⚡ Admin Demo
-              </button>
+          {/* Quick Demo Login Preset Buttons (Only visible when toggled ON by Admin) */}
+          {demoLoginEnabled && (
+            <div className="p-4 bg-amber-50/60 dark:bg-amber-950/20 border-t border-amber-200 dark:border-amber-900/40 text-center animate-fade-in">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                  <Key className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Demo Accounts Active
+                </p>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                  Demo Mode ON
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={handleDemoStudent}
+                  disabled={loading}
+                  className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[11px] font-black text-slate-900 dark:text-white hover:border-blue-600 transition-colors"
+                >
+                  🎓 Intern Demo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDemoMentor}
+                  disabled={loading}
+                  className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[11px] font-black text-slate-900 dark:text-white hover:border-blue-600 transition-colors"
+                >
+                  💼 Mentor Demo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDemoAdmin}
+                  disabled={loading}
+                  className="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-[11px] font-black text-slate-900 dark:text-white hover:border-blue-600 transition-colors"
+                >
+                  ⚡ Admin Demo
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

@@ -7,8 +7,8 @@ import { NotificationModal } from './NotificationModal';
 import { api } from '../services/api';
 
 interface NavbarProps {
-  currentTab: 'discovery' | 'search' | 'dashboard' | 'admin';
-  setCurrentTab: (tab: 'discovery' | 'search' | 'dashboard' | 'admin') => void;
+  currentTab: 'discovery' | 'search' | 'dashboard' | 'admin' | 'super-admin';
+  setCurrentTab: (tab: 'discovery' | 'search' | 'dashboard' | 'admin' | 'super-admin') => void;
   openCreateModal?: () => void;
   onSearch: (query: string) => void;
 }
@@ -135,20 +135,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
               <Trophy className="w-4 h-4 text-amber-600 fill-amber-400" />
               <span>Performance</span>
             </button>
-
-            {isMentorOrAdmin && (
-              <button
-                onClick={() => setCurrentTab('admin')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  currentTab === 'admin' 
-                    ? 'bg-purple-600 text-white shadow-md' 
-                    : 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 hover:bg-purple-200 border border-purple-300 dark:border-purple-800'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Analytics & Admin</span>
-              </button>
-            )}
           </nav>
 
           {/* Right Header Action Icons (Always Visible & Optimized for Phone/Tablet) */}
@@ -264,28 +250,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onSea
           <span>Ranks</span>
         </button>
 
-        {isMentorOrAdmin ? (
-          <button
-            onClick={() => setCurrentTab('admin')}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold transition-all ${
-              currentTab === 'admin' ? 'text-purple-600 dark:text-purple-400' : 'text-purple-500/80'
-            }`}
-          >
-            <BarChart3 className="w-5 h-5 mb-0.5" />
-            <span>Admin</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              if (!user) openAuthModal('login');
-              else setProfileOpen(true);
-            }}
-            className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold text-slate-500 dark:text-slate-400"
-          >
-            <UserIcon className="w-5 h-5 mb-0.5" />
-            <span>Profile</span>
-          </button>
-        )}
+        <button
+          onClick={() => {
+            if (!user) openAuthModal('login');
+            else setProfileOpen(true);
+          }}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-extrabold text-slate-500 dark:text-slate-400"
+        >
+          <UserIcon className="w-5 h-5 mb-0.5" />
+          <span>Profile</span>
+        </button>
       </div>
 
       {/* User Profile Modal */}

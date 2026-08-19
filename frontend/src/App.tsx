@@ -11,12 +11,35 @@ import { SearchEventsPage } from './pages/SearchEventsPage';
 import { EventDetailsPage } from './pages/EventDetailsPage';
 import { StudentDashboardPage } from './pages/StudentDashboardPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { SuperAdminPage } from './pages/SuperAdminPage';
 import type { EventItem } from './services/api';
 import { api } from './services/api';
 
+function getInitialTab(): 'discovery' | 'search' | 'dashboard' | 'admin' | 'super-admin' {
+  if (typeof window === 'undefined') return 'discovery';
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  const search = new URLSearchParams(window.location.search);
+  const tabParam = search.get('tab')?.toLowerCase();
+
+  if (path.includes('super-admin') || path.includes('superadmin') || hash.includes('super-admin') || hash.includes('superadmin') || tabParam === 'super-admin' || tabParam === 'superadmin') {
+    return 'super-admin';
+  }
+  if (path.includes('admin') || hash.includes('admin') || tabParam === 'admin') {
+    return 'admin';
+  }
+  if (path.includes('dashboard') || hash.includes('dashboard') || tabParam === 'dashboard') {
+    return 'dashboard';
+  }
+  if (path.includes('search') || path.includes('explore') || hash.includes('search') || tabParam === 'search') {
+    return 'search';
+  }
+  return 'discovery';
+}
+
 export function AppContent() {
   const { openAuthModal, user } = useAuth();
-  const [currentTab, setCurrentTab] = useState<'discovery' | 'search' | 'dashboard' | 'admin'>('discovery');
+  const [currentTab, setCurrentTab] = useState<'discovery' | 'search' | 'dashboard' | 'admin' | 'super-admin'>(getInitialTab);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +47,29 @@ export function AppContent() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Sync tab with browser URL history
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const tab = getInitialTab();
+      setCurrentTab(tab);
+    };
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, []);
+
+  const handleTabChange = (tab: 'discovery' | 'search' | 'dashboard' | 'admin' | 'super-admin') => {
+    setCurrentTab(tab);
+    setSelectedEventId(null);
+    try {
+      const url = tab === 'discovery' ? '/' : `/${tab}`;
+      window.history.pushState(null, '', url);
+    } catch {}
+  };
 
   const fetchEvents = async () => {
     try {
@@ -82,14 +128,11 @@ export function AppContent() {
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}
-        setCurrentTab={(tab) => {
-          setCurrentTab(tab);
-          setSelectedEventId(null);
-        }}
+        setCurrentTab={handleTabChange}
         openCreateModal={() => setCreateModalOpen(true)}
         onSearch={(q) => {
           setSearchQuery(q);
-          if (currentTab !== 'search') setCurrentTab('search');
+          if (currentTab !== 'search') handleTabChange('search');
         }}
       />
 
@@ -124,6 +167,11 @@ export function AppContent() {
         ) : currentTab === 'dashboard' ? (
           <StudentDashboardPage
             onSelectEvent={handleSelectEvent}
+            key={refreshTrigger}
+          />
+        ) : currentTab === 'super-admin' ? (
+          <SuperAdminPage
+            onNavigateTab={handleTabChange}
             key={refreshTrigger}
           />
         ) : (

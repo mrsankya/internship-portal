@@ -251,6 +251,12 @@ export interface ResumeMatchResult {
   aiRecommendations: string[];
 }
 
+export interface SystemSettings {
+  demoLoginEnabled: boolean;
+  key?: string;
+  updatedBy?: string;
+}
+
 // Resolution for API Base URL
 
 const getApiBaseUrl = () => {
@@ -577,6 +583,32 @@ export const api = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ newPassword })
+    });
+    return await parseResponse(res);
+  },
+
+  // System Settings
+  async getPublicSettings(): Promise<SystemSettings> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/system-settings`);
+      return await parseResponse(res);
+    } catch {
+      return { demoLoginEnabled: false };
+    }
+  },
+
+  async getAdminSettings(): Promise<SystemSettings> {
+    const res = await fetch(`${API_BASE}/admin/settings`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async toggleDemoLoginSetting(enabled: boolean): Promise<{ success: boolean; demoLoginEnabled: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/admin/settings/demo-login`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ enabled })
     });
     return await parseResponse(res);
   },

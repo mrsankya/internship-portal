@@ -14,6 +14,9 @@ interface AuthContextType {
   authModalMode: 'login' | 'register';
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  demoLoginEnabled: boolean;
+  setDemoLoginEnabled: (val: boolean) => void;
+  refreshSystemSettings: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +45,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const toggleTheme = () => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
+
+  // Demo Mode State (default disabled)
+  const [demoLoginEnabled, setDemoLoginEnabled] = useState<boolean>(() => {
+    const cached = localStorage.getItem('digi_demo_login_enabled');
+    return cached === 'true';
+  });
+
+  const refreshSystemSettings = async () => {
+    try {
+      const settings = await api.getPublicSettings();
+      setDemoLoginEnabled(!!settings.demoLoginEnabled);
+      localStorage.setItem('digi_demo_login_enabled', settings.demoLoginEnabled ? 'true' : 'false');
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    refreshSystemSettings();
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('digi_internship_token');
@@ -76,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+    refreshSystemSettings();
     setAuthModalMode(mode);
     setAuthModalOpen(true);
   };
@@ -96,7 +120,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       authModalOpen,
       authModalMode,
       theme,
-      toggleTheme
+      toggleTheme,
+      demoLoginEnabled,
+      setDemoLoginEnabled: (val: boolean) => {
+        setDemoLoginEnabled(val);
+        localStorage.setItem('digi_demo_login_enabled', val ? 'true' : 'false');
+      },
+      refreshSystemSettings
     }}>
       {children}
     </AuthContext.Provider>

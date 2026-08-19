@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Calendar, Edit, Trash2, PlusCircle, Shield, Megaphone, Lock, Crown, QrCode, Download, Briefcase, FileSpreadsheet, CheckCircle2, UserCheck } from 'lucide-react';
+import { BarChart3, Calendar, Edit, Trash2, PlusCircle, Shield, Megaphone, Lock, Crown, QrCode, Download, Briefcase, FileSpreadsheet, CheckCircle2, UserCheck, Settings, ToggleLeft, ToggleRight, Key, ShieldCheck, RefreshCw } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import type { InternshipItem, User, Announcement, InstitutionAnalytics } from '../services/api';
 import { EditEventModal } from '../components/EditEventModal';
@@ -12,7 +13,8 @@ interface AdminDashboardPageProps {
 }
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventCreatedOrUpdated, onOpenCreateModal }) => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'pending' | 'users' | 'announcements'>('analytics');
+  const { demoLoginEnabled, setDemoLoginEnabled, refreshSystemSettings } = useAuth();
+  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'pending' | 'users' | 'announcements' | 'settings'>('analytics');
   
   // State
   const [analytics, setAnalytics] = useState<InstitutionAnalytics | null>(null);
@@ -20,6 +22,11 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
   const [pendingEvents, setPendingEvents] = useState<InternshipItem[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  // Demo Login Mode State
+  const [isDemoModeOn, setIsDemoModeOn] = useState<boolean>(demoLoginEnabled);
+  const [isTogglingDemo, setIsTogglingDemo] = useState<boolean>(false);
+  const [demoFeedback, setDemoFeedback] = useState<string | null>(null);
 
   // Modals
   const [selectedEditEvent, setSelectedEditEvent] = useState<InternshipItem | null>(null);
@@ -40,12 +47,13 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
 
   const loadAdminData = async () => {
     try {
-      const [analyticsData, eventsData, pendingData, usersData, announcementsData] = await Promise.all([
+      const [analyticsData, eventsData, pendingData, usersData, announcementsData, settingsData] = await Promise.all([
         api.getInstitutionAnalytics().catch(() => null),
         api.getInternships(),
         api.getPendingInternships().catch(() => []),
         api.getAllUsers().catch(() => []),
-        api.getAnnouncements().catch(() => [])
+        api.getAnnouncements().catch(() => []),
+        api.getAdminSettings().catch(() => null)
       ]);
 
       setAnalytics(analyticsData);
@@ -53,6 +61,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
       setPendingEvents(pendingData);
       setUsers(usersData);
       setAnnouncements(announcementsData);
+      if (settingsData && typeof settingsData.demoLoginEnabled === 'boolean') {
+        setIsDemoModeOn(settingsData.demoLoginEnabled);
+        setDemoLoginEnabled(settingsData.demoLoginEnabled);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -151,6 +163,23 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
     }
   };
 
+  const handleToggleDemoLogin = async (targetState?: boolean) => {
+    const nextState = typeof targetState === 'boolean' ? targetState : !isDemoModeOn;
+    setIsTogglingDemo(true);
+    setDemoFeedback(null);
+    try {
+      const res = await api.toggleDemoLoginSetting(nextState);
+      setIsDemoModeOn(res.demoLoginEnabled);
+      setDemoLoginEnabled(res.demoLoginEnabled);
+      setDemoFeedback(res.message);
+      setTimeout(() => setDemoFeedback(null), 5000);
+    } catch (err: any) {
+      alert(err.message || 'Failed to toggle demo login setting');
+    } finally {
+      setIsTogglingDemo(false);
+    }
+  };
+
   const handleExportCSV = () => {
     if (analytics) {
       api.exportAnalyticsCSV(analytics);
@@ -179,6 +208,27 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Quick Demo Mode Toggle Button */}
+          <button
+            onClick={() => handleToggleDemoLogin()}
+            disabled={isTogglingDemo}
+            title={isDemoModeOn ? "Click to disable demo logins" : "Click to enable demo logins"}
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-black shadow-xs flex items-center gap-2 transition-all border ${
+              isDemoModeOn
+                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-amber-500/20'
+                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+            }`}
+          >
+            {isTogglingDemo ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-current" />
+            ) : isDemoModeOn ? (
+              <ToggleRight className="w-5 h-5 text-emerald-200" />
+            ) : (
+              <ToggleLeft className="w-5 h-5 text-slate-400" />
+            )}
+            <span>Demo Mode: <strong>{isDemoModeOn ? 'ON' : 'OFF'}</strong></span>
+          </button>
+
           <button
             onClick={handleExportCSV}
             className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-black shadow-md flex items-center gap-1.5 transition-all border border-slate-700"
@@ -199,6 +249,22 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
           </button>
         </div>
       </div>
+
+      {/* Demo Mode Notification / Feedback Banner */}
+      {demoFeedback && (
+        <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 text-xs font-bold flex items-center justify-between animate-fade-in shadow-xs">
+          <div className="flex items-center gap-2">
+            <Key className="w-4 h-4 text-blue-600 shrink-0" />
+            <span>{demoFeedback}</span>
+          </div>
+          <button
+            onClick={() => setDemoFeedback(null)}
+            className="text-xs text-blue-500 hover:text-blue-800 dark:hover:text-blue-100 font-bold"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Console Tabs */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 gap-2 overflow-x-auto">
@@ -241,6 +307,17 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
           }`}
         >
           <Megaphone className="w-4 h-4" /> Bulletins ({announcements.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`pb-3 px-4 text-xs font-black border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === 'settings' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Settings className="w-4 h-4" /> System & Demo Controls
+          {isDemoModeOn && (
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+          )}
         </button>
       </div>
 
@@ -672,6 +749,141 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
                 <p className="text-[10px] text-slate-500 font-bold">{a.authorName || 'Institution Admin'} • {new Date(a.createdAt).toLocaleDateString()}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 5: System & Demo Login Controls */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6">
+          {/* Main Demo Toggle Banner Card */}
+          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100 dark:border-slate-800 pb-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                    isDemoModeOn
+                      ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                      : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                  }`}>
+                    {isDemoModeOn ? (
+                      <>
+                        <Key className="w-3.5 h-3.5 text-amber-600" /> Demo Mode Enabled
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Production Mode (Demo Disabled)
+                      </>
+                    )}
+                  </span>
+                </div>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white font-heading">
+                  Quick Demo Login Presets Control
+                </h2>
+                <p className="text-xs text-slate-500 font-medium max-w-2xl">
+                  Toggle whether the quick 1-click demo login buttons (Intern, Mentor, Admin) are shown on the public sign-in modal. Disable this in production to ensure only verified accounts can log in.
+                </p>
+              </div>
+
+              {/* Big Interactive Toggle Switch */}
+              <div className="flex items-center gap-4 shrink-0 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="text-right">
+                  <div className="text-xs font-black text-slate-900 dark:text-white">
+                    {isDemoModeOn ? 'Demo Logins Active' : 'Demo Logins Disabled'}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-bold">
+                    {isDemoModeOn ? 'Visible on login modal' : 'Hidden from login modal'}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleDemoLogin()}
+                  disabled={isTogglingDemo}
+                  aria-label="Toggle Demo Login Mode"
+                  className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    isDemoModeOn ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform flex items-center justify-center ${
+                      isDemoModeOn ? 'translate-x-9' : 'translate-x-1'
+                    }`}
+                  >
+                    {isTogglingDemo ? (
+                      <RefreshCw className="w-3 h-3 text-amber-600 animate-spin" />
+                    ) : isDemoModeOn ? (
+                      <Key className="w-3 h-3 text-amber-600" />
+                    ) : (
+                      <Lock className="w-3 h-3 text-slate-400" />
+                    )}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Status Summary & Security Notes */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className={`p-4 rounded-2xl border transition-colors ${
+                isDemoModeOn 
+                  ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50' 
+                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800'
+              }`}>
+                <div className="flex items-center gap-2 text-xs font-black text-slate-900 dark:text-white mb-1">
+                  🎓 Intern Demo Account
+                </div>
+                <div className="text-xs font-mono text-blue-600 dark:text-blue-400 font-bold truncate">
+                  alex.rivera@digicampus.edu
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  Password: <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-[10px]">password123</code>
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-2xl border transition-colors ${
+                isDemoModeOn 
+                  ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50' 
+                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800'
+              }`}>
+                <div className="flex items-center gap-2 text-xs font-black text-slate-900 dark:text-white mb-1">
+                  💼 Mentor Demo Account
+                </div>
+                <div className="text-xs font-mono text-blue-600 dark:text-blue-400 font-bold truncate">
+                  sarah.lin@techcorp.com
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  Password: <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-[10px]">password123</code>
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-2xl border transition-colors ${
+                isDemoModeOn 
+                  ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50' 
+                  : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800'
+              }`}>
+                <div className="flex items-center gap-2 text-xs font-black text-slate-900 dark:text-white mb-1">
+                  ⚡ Institution Admin Demo
+                </div>
+                <div className="text-xs font-mono text-blue-600 dark:text-blue-400 font-bold truncate">
+                  mr.sankya@digicampus.edu
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  Password: <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-[10px]">Mr.sankya@123</code>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Helper Tips */}
+            <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 text-xs text-blue-900 dark:text-blue-200 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-blue-600" /> Best Practices for Demo Logins:
+              </p>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] text-blue-800 dark:text-blue-300">
+                <li>Keep demo logins <strong>DISABLED</strong> during live institutional operations and student recruitment cycles.</li>
+                <li>Turn demo logins <strong>ENABLED</strong> only when presenting demos, onboarding recruiters, or conducting QA evaluation.</li>
+                <li>Changes take effect immediately across all connected browsers and sessions.</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
