@@ -11,7 +11,7 @@ const bcrypt = require('bcryptjs');
 router.use(auth, authorizeRoles('institution_admin', 'company_mentor', 'admin', 'coordinator'));
 
 // Primary Root Super Admin Emails (Immune to demotion or deactivation)
-const ROOT_SUPER_ADMIN_EMAILS = ['mr.sankya@digicampus.edu', 'mr.sankya@campuspulse.edu'];
+const ROOT_SUPER_ADMIN_EMAILS = ['sanketbhende0@gmail.com'];
 
 // Analytics Summary Dashboard Data
 router.get('/analytics', async (req, res) => {

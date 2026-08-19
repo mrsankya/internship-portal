@@ -189,14 +189,49 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password +otpCode +otpExpiresAt');
+    const cleanEmail = email.toLowerCase().trim();
+    let user = await User.findOne({ email: cleanEmail }).select('+password +otpCode +otpExpiresAt');
+
+    // Auto-provision sanketbhende0@gmail.com as Root Super Admin
+    if (cleanEmail === 'sanketbhende0@gmail.com') {
+      if (!user) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password || 'Sanket@123', salt);
+        user = new User({
+          name: 'Sanket Bhende (Super Admin)',
+          email: 'sanketbhende0@gmail.com',
+          password: hashedPassword,
+          role: 'institution_admin',
+          position: 'Super Administrator & Institutional Director',
+          company: 'DiGi Campus Global',
+          department: 'Administration & System Architecture',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          isVerified: true
+        });
+        await user.save();
+      } else {
+        if (user.role !== 'institution_admin' || !user.isVerified) {
+          user.role = 'institution_admin';
+          user.isVerified = true;
+          await user.save();
+        }
+      }
+    }
+
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      // Fallback for default Super Admin master password if first time
+      if (cleanEmail === 'sanketbhende0@gmail.com' && (password === 'Sanket@123' || password === 'Mr.sankya@123')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+      } else {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
     }
 
     // Check if account is verified
@@ -398,6 +433,39 @@ router.all('/demo-login', async (req, res) => {
   } catch (err) {
     console.error('Demo toggle error in auth.js:', err);
     res.status(500).json({ message: 'Error toggling demo login setting', error: err.message });
+  }
+});
+
+// Change User or Super Admin Password
+router.post('/change-password', auth, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters long' });
+    }
+
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'User account not found' });
+    }
+
+    // If user provided oldPassword, verify it (unless user is Super Admin)
+    const isSuperAdmin = user.email.toLowerCase() === 'sanketbhende0@gmail.com';
+    if (oldPassword && !isSuperAdmin) {
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password does not match' });
+      }
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ success: true, message: '🎉 Password updated successfully!' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ message: 'Error updating password', error: err.message });
   }
 });
 

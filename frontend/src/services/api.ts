@@ -442,6 +442,15 @@ export const api = {
     return await parseResponse(res);
   },
 
+  async changePassword(newPassword: string, oldPassword?: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/auth/change-password`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ newPassword, oldPassword })
+    });
+    return await parseResponse(res);
+  },
+
   logout() {
     clearAuthToken();
   },

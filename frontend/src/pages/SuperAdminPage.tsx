@@ -16,7 +16,7 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
   const { user, login, demoLoginEnabled, setDemoLoginEnabled } = useAuth();
   
   // Login form if not logged in
-  const [adminEmail, setAdminEmail] = useState('mr.sankya@digicampus.edu');
+  const [adminEmail, setAdminEmail] = useState('sanketbhende0@gmail.com');
   const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
@@ -28,6 +28,12 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
+  // Super Admin Self Password Management
+  const [masterNewPassword, setMasterNewPassword] = useState('');
+  const [masterConfirmPassword, setMasterConfirmPassword] = useState('');
+  const [masterPasswordLoading, setMasterPasswordLoading] = useState(false);
+  const [masterPasswordMsg, setMasterPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   // Controls
   const [isDemoModeOn, setIsDemoModeOn] = useState<boolean>(demoLoginEnabled);
   const [isTogglingDemo, setIsTogglingDemo] = useState<boolean>(false);
@@ -35,7 +41,7 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
 
-  // Password reset modal
+  // Password reset modal for other users
   const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
 
@@ -44,7 +50,7 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
   const [broadcastContent, setBroadcastContent] = useState('');
   const [broadcastCategory, setBroadcastCategory] = useState<'Urgent' | 'General' | 'Venue Update'>('Urgent');
 
-  const ROOT_SUPER_ADMIN_EMAILS = ['mr.sankya@digicampus.edu', 'mr.sankya@campuspulse.edu'];
+  const ROOT_SUPER_ADMIN_EMAILS = ['sanketbhende0@gmail.com'];
 
   const isSuperAdminUser = user && (
     ROOT_SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase()) || 
@@ -148,6 +154,34 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
     }
   };
 
+  const handleUpdateSuperAdminPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMasterPasswordMsg(null);
+
+    if (!masterNewPassword || masterNewPassword.length < 6) {
+      setMasterPasswordMsg({ type: 'error', text: 'New password must be at least 6 characters long.' });
+      return;
+    }
+
+    if (masterNewPassword !== masterConfirmPassword) {
+      setMasterPasswordMsg({ type: 'error', text: 'Passwords do not match. Please retype carefully.' });
+      return;
+    }
+
+    setMasterPasswordLoading(true);
+    try {
+      const res = await api.changePassword(masterNewPassword);
+      setMasterPasswordMsg({ type: 'success', text: res.message || 'Super Admin Master Password updated successfully!' });
+      setMasterNewPassword('');
+      setMasterConfirmPassword('');
+      setTimeout(() => setMasterPasswordMsg(null), 6000);
+    } catch (err: any) {
+      setMasterPasswordMsg({ type: 'error', text: err.message || 'Failed to update Super Admin password.' });
+    } finally {
+      setMasterPasswordLoading(false);
+    }
+  };
+
   const handlePostEmergencyBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!broadcastTitle || !broadcastContent) return;
@@ -194,7 +228,7 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
               Super Admin Console
             </h1>
             <p className="text-xs text-slate-500 font-medium">
-              Restricted Root Access. Enter your master credentials to manage institution parameters and security toggles.
+              Sole Root Access (<strong>sanketbhende0@gmail.com</strong>). Enter your master password to access system controls.
             </p>
           </div>
 
@@ -213,7 +247,7 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
                 required
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
-                placeholder="mr.sankya@digicampus.edu"
+                placeholder="sanketbhende0@gmail.com"
                 className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-amber-500 text-slate-900 dark:text-white font-bold"
               />
             </div>
@@ -394,7 +428,77 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
         </div>
       </div>
 
-      {/* 2. Super Admin User Directory & Security Controls */}
+      {/* 2. Super Admin Master Account & Password Management */}
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white uppercase tracking-wider flex items-center gap-1">
+                <Crown className="w-3 h-3 fill-current" /> Protected Sole Super Admin
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-500">sanketbhende0@gmail.com</span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white font-heading mt-1 flex items-center gap-2">
+              <Key className="w-5 h-5 text-amber-500" /> Change Super Admin Master Password
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Directly update your root access password. Minimum 6 characters required.
+            </p>
+          </div>
+        </div>
+
+        {masterPasswordMsg && (
+          <div className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fade-in ${
+            masterPasswordMsg.type === 'success'
+              ? 'bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 text-emerald-800 dark:text-emerald-200'
+              : 'bg-rose-50 dark:bg-rose-950/60 border border-rose-300 text-rose-800 dark:text-rose-200'
+          }`}>
+            {masterPasswordMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-rose-600" />}
+            <span>{masterPasswordMsg.text}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleUpdateSuperAdminPassword} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div>
+            <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1">New Master Password</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              placeholder="Enter new password (min 6 chars)..."
+              value={masterNewPassword}
+              onChange={(e) => setMasterNewPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-amber-500 text-slate-900 dark:text-white font-bold"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1">Confirm Master Password</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              placeholder="Confirm new password..."
+              value={masterConfirmPassword}
+              onChange={(e) => setMasterConfirmPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-amber-500 text-slate-900 dark:text-white font-bold"
+            />
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={masterPasswordLoading}
+              className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {masterPasswordLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+              <span>Save Super Admin Password</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* 3. Super Admin User Directory & Security Controls */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
