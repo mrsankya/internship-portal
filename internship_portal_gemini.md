@@ -76,10 +76,14 @@
 10. **Digital Certificates**:
     - Repurposed participation certificates into Verified Internship Completion Certificates with digital mentor signature, institutional seal, and QR verification code (`CERT-INT-XXXXXX`).
 11. **Production-Ready Demo Mode Toggle & Security Isolation**:
-    - **Disabled by default**: Public sign-in modal ([AuthModal.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/components/AuthModal.tsx)) no longer displays quick demo logins by default.
-    - **Admin Control**: Institution Admins have a dedicated interactive toggle switch directly in the Admin Console header and in the "System & Demo Controls" tab ([AdminDashboardPage.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/pages/AdminDashboardPage.tsx)).
-    - **Dynamic Persistence**: Setting is stored in MongoDB via `SystemConfig` model (`backend/models/SystemConfig.js`), exposed via public endpoint `GET /api/auth/system-settings`, and toggled securely via `PUT /api/admin/settings/demo-login`.
-    - When toggled ON, the modal shows the active demo logins (Intern, Mentor, Admin) with visual demo badge; when toggled OFF, all demo presets are completely hidden and secured.
+     - **Disabled by default**: Public sign-in modal ([AuthModal.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/components/AuthModal.tsx)) no longer displays quick demo logins by default.
+     - **Admin Control**: Institution Admins have a dedicated interactive toggle switch directly in the Admin Console header and in the "System & Demo Controls" tab ([AdminDashboardPage.tsx](file:///C:/Users/sanke/internship%20portal/frontend/src/pages/AdminDashboardPage.tsx)).
+     - **Dynamic Persistence**: Setting is stored in MongoDB via `SystemConfig` model (`backend/models/SystemConfig.js`), exposed via public endpoint `GET /api/auth/system-settings`, and toggled securely via `PUT /api/admin/settings/demo-login`.
+     - When toggled ON, the modal shows the active demo logins (Intern, Mentor, Admin) with visual demo badge; when toggled OFF, all demo presets are completely hidden and secured.
+12. **Session Storage & Automatic Inactivity Expiry**:
+     - **Browser Close Logout**: Replaced persistent `localStorage` with `sessionStorage` for token and session storage. When the user closes the browser or tab, their session is automatically destroyed.
+     - **Inactivity Timeout**: Active session timestamp tracking auto-expires idle sessions after 60 minutes of inactivity and clears credentials with an auto-logout alert.
+     - **DevTools & Right-Click Protection**: Context menu and developer inspection shortcuts (`F12`, `Ctrl+Shift+I/J/C`, `Ctrl+U`, `Ctrl+S`) are prevented globally.
 
 ## Next Steps / Proposed Future Upgrades
 1. **🎙️ AI Mock Technical Interview Simulator**: 3-question WebRTC/audio interview with AI scoring on technical accuracy & keyword coverage.
