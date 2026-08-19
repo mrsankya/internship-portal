@@ -208,27 +208,6 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Quick Demo Mode Toggle Button */}
-          <button
-            onClick={() => handleToggleDemoLogin()}
-            disabled={isTogglingDemo}
-            title={isDemoModeOn ? "Click to disable demo logins" : "Click to enable demo logins"}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-black shadow-xs flex items-center gap-2 transition-all border ${
-              isDemoModeOn
-                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-amber-500/20'
-                : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
-            }`}
-          >
-            {isTogglingDemo ? (
-              <RefreshCw className="w-4 h-4 animate-spin text-current" />
-            ) : isDemoModeOn ? (
-              <ToggleRight className="w-5 h-5 text-emerald-200" />
-            ) : (
-              <ToggleLeft className="w-5 h-5 text-slate-400" />
-            )}
-            <span>Demo Mode: <strong>{isDemoModeOn ? 'ON' : 'OFF'}</strong></span>
-          </button>
-
           <button
             onClick={handleExportCSV}
             className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-black shadow-md flex items-center gap-1.5 transition-all border border-slate-700"
@@ -246,6 +225,27 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onEventC
             className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-md flex items-center gap-1.5 transition-all"
           >
             <PlusCircle className="w-4 h-4" /> Post New Position
+          </button>
+
+          {/* Demo Mode Toggle Button (Positioned right alongside the action buttons) */}
+          <button
+            onClick={() => handleToggleDemoLogin()}
+            disabled={isTogglingDemo}
+            title={isDemoModeOn ? "Click to disable demo logins" : "Click to enable demo logins"}
+            className={`px-4 py-2.5 rounded-xl text-xs font-black shadow-md flex items-center gap-2 transition-all border cursor-pointer ${
+              isDemoModeOn
+                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-amber-500/25 ring-2 ring-amber-400/40'
+                : 'bg-slate-700 hover:bg-slate-800 text-slate-200 border-slate-600'
+            }`}
+          >
+            {isTogglingDemo ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-current" />
+            ) : isDemoModeOn ? (
+              <Key className="w-4 h-4 text-white" />
+            ) : (
+              <Lock className="w-4 h-4 text-slate-400" />
+            )}
+            <span>Demo Mode: <strong className={isDemoModeOn ? 'text-white underline underline-offset-2' : 'text-slate-300'}>{isDemoModeOn ? 'ON' : 'OFF'}</strong></span>
           </button>
         </div>
       </div>

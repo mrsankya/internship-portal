@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, Crown, Key, ShieldCheck, RefreshCw, Users, Database, 
   Lock, AlertTriangle, Download, Trash2, CheckCircle2, Megaphone, 
@@ -270,6 +270,27 @@ export const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ onNavigateTab })
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Demo Mode Toggle Button */}
+          <button
+            onClick={handleToggleDemoMode}
+            disabled={isTogglingDemo}
+            title={isDemoModeOn ? "Click to disable Demo Login presets" : "Click to enable Demo Login presets"}
+            className={`px-4 py-2.5 rounded-xl text-xs font-black shadow-md flex items-center gap-2 transition-all border cursor-pointer ${
+              isDemoModeOn
+                ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-amber-500/25 ring-2 ring-amber-400/40'
+                : 'bg-slate-700 hover:bg-slate-800 text-slate-200 border-slate-600'
+            }`}
+          >
+            {isTogglingDemo ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-current" />
+            ) : isDemoModeOn ? (
+              <Key className="w-4 h-4 text-white" />
+            ) : (
+              <Lock className="w-4 h-4 text-slate-400" />
+            )}
+            <span>Demo Mode: <strong className={isDemoModeOn ? 'text-white underline underline-offset-2' : 'text-slate-300'}>{isDemoModeOn ? 'ON' : 'OFF'}</strong></span>
+          </button>
+
           <button
             onClick={() => onNavigateTab('admin')}
             className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-md flex items-center gap-1.5 transition-all"
