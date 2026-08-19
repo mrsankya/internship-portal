@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { api, getAuthToken, updateLastActiveTime, clearAuthToken } from '../services/api';
 import type { User } from '../services/api';
 
 interface AuthContextType {
@@ -66,8 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshSystemSettings();
   }, []);
 
+  // Check auth session on load (using sessionStorage to guarantee logout when browser is closed)
   useEffect(() => {
-    const token = localStorage.getItem('digi_internship_token');
+    const token = getAuthToken();
     if (token) {
       api.getMe()
         .then(userData => setUser(userData))
@@ -77,9 +78,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         .finally(() => setLoading(false));
     } else {
+      // Clear any legacy token from previous version
+      clearAuthToken();
       setLoading(false);
     }
   }, []);
+
+  // Track user activity to refresh session timer & monitor expiration
+  useEffect(() => {
+    let lastThrottledTime = 0;
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastThrottledTime > 30000) { // Throttle activity updates to every 30 seconds
+        lastThrottledTime = now;
+        updateLastActiveTime();
+      }
+    };
+
+    // User activity listeners
+    window.addEventListener('mousemove', handleUserActivity, { passive: true });
+    window.addEventListener('keydown', handleUserActivity, { passive: true });
+    window.addEventListener('click', handleUserActivity, { passive: true });
+    window.addEventListener('touchstart', handleUserActivity, { passive: true });
+    window.addEventListener('scroll', handleUserActivity, { passive: true });
+
+    // Periodic heartbeat to automatically log out if session expires
+    const expiryInterval = setInterval(() => {
+      const currentToken = getAuthToken();
+      if (!currentToken && user) {
+        // Session has expired
+        setUser(null);
+        alert('⏱️ Session Expired: You have been automatically logged out due to inactivity or session expiry.');
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
+      clearInterval(expiryInterval);
+    };
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     const data = await api.login(email, password);

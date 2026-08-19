@@ -269,8 +269,61 @@ const getApiBaseUrl = () => {
 
 const API_BASE = getApiBaseUrl();
 
+// Session Expiration Constants (in milliseconds)
+const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour inactivity timeout
+const MAX_SESSION_DURATION_MS = 8 * 60 * 60 * 1000; // 8 hours absolute max session
+
+export const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  // Always use sessionStorage so closing the browser/tab clears the session
+  const token = sessionStorage.getItem('digi_internship_token');
+  if (!token) return null;
+
+  // Check for inactivity expiration
+  const lastActiveStr = sessionStorage.getItem('digi_session_last_active');
+  const loginTimeStr = sessionStorage.getItem('digi_session_login_time');
+  const now = Date.now();
+
+  if (lastActiveStr && now - parseInt(lastActiveStr, 10) > INACTIVITY_TIMEOUT_MS) {
+    clearAuthToken();
+    return null;
+  }
+
+  if (loginTimeStr && now - parseInt(loginTimeStr, 10) > MAX_SESSION_DURATION_MS) {
+    clearAuthToken();
+    return null;
+  }
+
+  return token;
+};
+
+export const setAuthToken = (token: string) => {
+  if (typeof window === 'undefined') return;
+  const now = Date.now().toString();
+  sessionStorage.setItem('digi_internship_token', token);
+  sessionStorage.setItem('digi_session_login_time', now);
+  sessionStorage.setItem('digi_session_last_active', now);
+  // Clear persistent localStorage token to prevent lingering sessions across browser restarts
+  localStorage.removeItem('digi_internship_token');
+};
+
+export const updateLastActiveTime = () => {
+  if (typeof window === 'undefined') return;
+  if (sessionStorage.getItem('digi_internship_token')) {
+    sessionStorage.setItem('digi_session_last_active', Date.now().toString());
+  }
+};
+
+export const clearAuthToken = () => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem('digi_internship_token');
+  sessionStorage.removeItem('digi_session_login_time');
+  sessionStorage.removeItem('digi_session_last_active');
+  localStorage.removeItem('digi_internship_token');
+};
+
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('digi_internship_token');
+  const token = getAuthToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -288,6 +341,9 @@ async function parseResponse(res: Response) {
     } catch (e) {
       data = { message: text || 'Non-JSON response received' };
     }
+  }
+  if (res.status === 401) {
+    clearAuthToken();
   }
   if (!res.ok) {
     throw new Error(data.message || `Server returned status ${res.status}`);
@@ -319,7 +375,7 @@ export const api = {
     }
 
     if (data.token) {
-      localStorage.setItem('digi_internship_token', data.token);
+      setAuthToken(data.token);
     }
     return data;
   },
@@ -332,7 +388,7 @@ export const api = {
     });
     const data = await parseResponse(res);
     if (data.token) {
-      localStorage.setItem('digi_internship_token', data.token);
+      setAuthToken(data.token);
     }
     return data;
   },
@@ -345,7 +401,7 @@ export const api = {
     });
     const data = await parseResponse(res);
     if (data.token) {
-      localStorage.setItem('digi_internship_token', data.token);
+      setAuthToken(data.token);
     }
     return data;
   },
@@ -366,7 +422,7 @@ export const api = {
       body: JSON.stringify(googleData)
     });
     const data = await parseResponse(res);
-    localStorage.setItem('digi_internship_token', data.token);
+    setAuthToken(data.token);
     return data;
   },
 
@@ -387,7 +443,7 @@ export const api = {
   },
 
   logout() {
-    localStorage.removeItem('digi_internship_token');
+    clearAuthToken();
   },
 
   // Internships
